@@ -19,3 +19,15 @@
 - Build output is expected in `dist/`; load that folder as an unpacked extension for manual browser QA.
 - The dashboard entry is `dashboard.html`; the service worker bundle is configured as `assets/serviceWorker.js`.
 - Extension API behavior must be verified manually in Chrome, Edge, and Brave because unit tests can only cover mocked Chrome APIs.
+
+## Core Domain Layer
+
+- Added pure TypeScript modules under `src/core/` for redacted data types, site grouping, session-cookie classification, risk scoring, provider actions, inventory aggregation, and checklist export.
+- Site grouping uses `tldts` so domains like `admin.example.co.uk` group to `example.co.uk` instead of a naive last-two-label key.
+- Session classification is heuristic and name/metadata based. It flags auth-like names such as `sessionid`, `sid`, `auth`, `token`, `jwt`, `remember`, and `refresh`; CSRF-style names alone are explicitly not treated as login sessions.
+- Risk scoring is intentionally explainable: reasons are carried into each `SiteInventory` item so the UI can show why a site was flagged.
+- Provider actions currently cover Google, Microsoft, Apple, Amazon, GitHub, Facebook, Instagram, X/Twitter, LinkedIn, Dropbox, Slack, and Discord.
+- Checklist export includes the local-cleanup limitation warning and supports privacy-minimal mode that omits cookie names.
+- Verification after this layer:
+  - `npm test` passed: 6 files, 24 tests.
+  - `npm run typecheck` passed.

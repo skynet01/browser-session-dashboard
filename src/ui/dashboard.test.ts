@@ -6,9 +6,9 @@ describe('dashboard scaffold', () => {
 
     await import('./dashboard');
 
-    expect(document.body.textContent).toContain(
-      "likely exposed if this browser profile's cookies were stolen"
-    );
-    expect(document.body.textContent).not.toContain('cookie value');
+    const text = document.body.textContent?.replace(/\s+/g, ' ') ?? '';
+
+    expect(text).toContain("likely exposed if this browser profile's cookies were stolen");
+    expect(text).not.toContain('cookie value');
   });
 });
