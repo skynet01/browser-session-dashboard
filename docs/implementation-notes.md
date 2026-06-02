@@ -99,3 +99,18 @@
   - `npm test` passed: 11 files, 42 tests.
   - `npm run build` passed.
   - Chrome headless smoke check passed against built `dist/dashboard.html` with a mocked extension runtime: response date rendered, PayPal provider review button rendered, `Mark done` rendered, row actions measured on the right side at default dashboard width, and `Likely sessions` stayed within a single metric row.
+
+## Retro Dashboard Styling
+
+- Restyled the dashboard to match the supplied retro UI-kit reference:
+  - Pale blue desktop/grid background.
+  - Cream paper panels with thick brown outlines and offset shadows.
+  - Window-like header/rows with colored top bars.
+  - Salmon, teal, yellow, and green status/action accents.
+  - Monospace, terminal-like typography with chunky button treatments.
+- Kept this as a CSS-only visual pass; no extension runtime behavior changed.
+- Verification after this styling pass:
+  - `npm run typecheck` passed.
+  - `npm test` passed: 11 files, 42 tests.
+  - `npm run build` passed.
+  - Chrome headless smoke check passed against built `dist/dashboard.html` with mocked scan data. Screenshot artifact: `output/retro-dashboard-smoke.png`.
