@@ -7,23 +7,24 @@
   --line-strong: oklch(0.82 0.01 95);
   --text: oklch(0.2 0.01 95);
   --muted: oklch(0.58 0.012 95);
-  --accent: oklch(0.48 0.11 125);
-  --accent-soft: oklch(0.92 0.05 125);
-  --accent-deep: oklch(0.36 0.1 125);
+  --accent: oklch(0.49 0.08 138);
+  --accent-soft: oklch(0.93 0.04 138);
+  --accent-deep: oklch(0.39 0.075 138);
   --danger: oklch(0.55 0.14 25);
   --danger-soft: oklch(0.94 0.04 25);
   --warn: oklch(0.72 0.11 68);
   --warn-soft: oklch(0.96 0.045 72);
   --info: oklch(0.56 0.08 210);
   --info-soft: oklch(0.94 0.035 210);
+  --control-height: 44px;
   color: var(--text);
   background: var(--page);
   font-family:
-    ui-sans-serif,
-    system-ui,
     -apple-system,
     BlinkMacSystemFont,
+    "Segoe UI Variable",
     "Segoe UI",
+    system-ui,
     sans-serif;
 }
 
@@ -33,7 +34,6 @@
 
 body {
   margin: 0;
-  min-width: 760px;
   background: var(--page);
 }
 
@@ -46,7 +46,8 @@ input {
 
 button,
 .button-link {
-  min-height: 42px;
+  height: var(--control-height);
+  min-height: var(--control-height);
   border: 1px solid transparent;
   border-radius: 999px;
   background: var(--accent);
@@ -55,8 +56,8 @@ button,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.88rem;
-  font-weight: 720;
+  font-size: 0.9rem;
+  font-weight: 700;
   letter-spacing: 0;
   padding: 0 18px;
   text-decoration: none;
@@ -117,7 +118,8 @@ input:focus-visible {
 
 select,
 input {
-  min-height: 42px;
+  height: var(--control-height);
+  min-height: var(--control-height);
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -127,9 +129,9 @@ input {
 }
 
 .dashboard-shell {
-  width: min(100%, 1680px);
-  min-height: calc(100vh - 48px);
-  margin: 24px auto;
+  width: auto;
+  min-height: calc(100vh - clamp(24px, 4vw, 56px));
+  margin: clamp(12px, 2vw, 28px);
   border: 1px solid oklch(0.94 0.006 95);
   border-radius: 30px;
   background: var(--surface);
@@ -175,8 +177,16 @@ p {
 
 h1 {
   color: var(--text);
-  font-size: 2rem;
-  font-weight: 780;
+  font-family:
+    "SF Pro Display",
+    "Segoe UI Variable Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+  font-size: clamp(2rem, 2.35vw, 2.85rem);
+  font-weight: 700;
   letter-spacing: 0;
   line-height: 1.08;
 }
@@ -184,8 +194,8 @@ h1 {
 .claim {
   max-width: 760px;
   color: var(--muted);
-  font-size: 0.98rem;
-  line-height: 1.55;
+  font-size: 1rem;
+  line-height: 1.6;
   margin-top: 12px;
 }
 
@@ -236,7 +246,7 @@ label span {
   color: var(--muted);
   display: block;
   font-size: 0.74rem;
-  font-weight: 730;
+  font-weight: 700;
   letter-spacing: 0.015em;
   margin-bottom: 12px;
   text-transform: uppercase;
@@ -245,8 +255,8 @@ label span {
 .summary-tile strong {
   display: block;
   color: var(--text);
-  font-size: 1.75rem;
-  font-weight: 760;
+  font-size: 1.52rem;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -331,8 +341,8 @@ label span {
 .action-panel h2,
 .empty-state h2 {
   color: var(--text);
-  font-size: 1.05rem;
-  font-weight: 760;
+  font-size: 1.08rem;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
@@ -340,7 +350,7 @@ label span {
 .reviewed-pill {
   border-radius: 999px;
   font-size: 0.68rem;
-  font-weight: 760;
+  font-weight: 700;
   padding: 4px 9px;
   text-transform: uppercase;
 }
@@ -376,7 +386,7 @@ label span {
   background: oklch(0.985 0.004 95 / 0.78);
   color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   padding: 5px 10px;
 }
 
@@ -394,7 +404,7 @@ label span {
   background: oklch(0.985 0.004 95 / 0.82);
   color: var(--muted);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 650;
   padding: 13px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -404,7 +414,7 @@ label span {
   color: var(--text);
   display: block;
   font-size: 1.2rem;
-  font-weight: 760;
+  font-weight: 700;
   line-height: 1;
   margin-bottom: 8px;
 }
@@ -457,14 +467,10 @@ label span {
 }
 
 @media (max-width: 980px) {
-  body {
-    min-width: 0;
-  }
-
   .dashboard-shell {
-    min-height: 100vh;
-    margin: 0;
-    border-radius: 0;
+    min-height: calc(100vh - 24px);
+    margin: 12px;
+    border-radius: 24px;
     padding: 22px;
   }
 
@@ -504,5 +510,14 @@ label span {
 
   .site-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .row-actions--right {
+    flex-direction: column;
+  }
+
+  .row-actions--right button,
+  .row-actions--right .button-link {
+    width: 100%;
   }
 }

@@ -159,3 +159,17 @@
   - `npm test` passed: 11 files, 41 tests.
   - `npm run build` passed.
   - Chrome headless smoke check passed against built `dist/dashboard.html` with mocked scan data. Screenshot artifact: `output/no-export-dashboard-smoke.png`.
+
+## Responsive Shell and Control Audit
+
+- Refined the dashboard sizing and typography:
+  - Removed the fixed body minimum width and uncapped the main app shell so it tracks browser width with responsive margins.
+  - Kept viewport margins and rounded corners on smaller screens instead of switching to a flush full-width shell.
+  - Switched to a cleaner platform UI font stack and reduced overly heavy type weights.
+  - Softened the primary green accent to fit the muted dashboard palette.
+  - Added a shared `--control-height` token and applied it to buttons, links, inputs, and selects.
+- Verification after this refinement:
+  - `npm run typecheck` passed.
+  - `npm test` passed: 11 files, 41 tests.
+  - `npm run build` passed.
+  - Chrome headless sizing audit passed at 1440px, 1100px, 760px, and 390px viewport widths: no horizontal overflow, shell width remained smaller than viewport with responsive margins, and every `button`/`.button-link` measured exactly 44px tall. Screenshot artifact: `output/sizing-typography-dashboard-smoke.png`.
