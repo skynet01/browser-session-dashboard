@@ -143,3 +143,19 @@
   - `npm test` passed: 11 files, 42 tests.
   - `npm run build` passed.
   - Chrome headless smoke check passed against built `dist/dashboard.html` with mocked scan data. Screenshot artifact: `output/dribbble-dashboard-smoke.png`.
+
+## Export Removal and Feature Backlog
+
+- Removed the dashboard `Export checklist` action because it was not useful enough for the current product flow.
+- Kept the core checklist builder code in place for now because it is covered by tests and could still support a future provider-response report if needed; the dashboard no longer imports or exposes it.
+- Candidate next features that would add more practical value than export:
+  - `Stale session focus`: highlight likely session cookies with long-lived expiration dates first.
+  - `Provider done checklist`: split each provider row into concrete steps such as review sessions, rotate password, check MFA, and check recovery methods.
+  - `Rescan diff`: compare the latest scan to the previous scan and show which domains disappeared after cleanup.
+  - `High-value only mode`: toggle the list down to known sensitive providers for faster incident triage.
+- Verification after this removal:
+  - `npm test src/ui/dashboard.test.ts` passed: 4 tests.
+  - `npm run typecheck` passed.
+  - `npm test` passed: 11 files, 41 tests.
+  - `npm run build` passed.
+  - Chrome headless smoke check passed against built `dist/dashboard.html` with mocked scan data. Screenshot artifact: `output/no-export-dashboard-smoke.png`.

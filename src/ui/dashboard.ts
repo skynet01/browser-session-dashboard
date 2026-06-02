@@ -1,5 +1,4 @@
 import './dashboard.css';
-import { buildResponseChecklist } from '../core/responseChecklist';
 import type { SiteInventory, SiteRisk } from '../core/types';
 import type { LocalCleanupResult } from '../background/chromeCleanup';
 import type { ScanSnapshot } from '../storage/snapshotStore';
@@ -52,11 +51,6 @@ async function handleClick(event: Event): Promise<void> {
 
   if (action === 'scan') {
     await scan();
-    return;
-  }
-
-  if (action === 'export') {
-    exportChecklist();
     return;
   }
 
@@ -148,34 +142,10 @@ async function markReviewed(site: SiteInventory): Promise<void> {
   render();
 }
 
-function exportChecklist(): void {
-  const snapshot = state.snapshot;
-  const inventory = snapshot?.inventory ?? [];
-  const checklist = buildResponseChecklist(inventory, {
-    privacyMinimal: true,
-    ...(snapshot?.suspectedCompromiseDate ? { suspectedCompromiseDate: snapshot.suspectedCompromiseDate } : {})
-  });
-  const blob = new Blob([checklist], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'browser-session-response-checklist.md';
-  if (!isTestRuntime()) {
-    document.body.append(link);
-    link.click();
-    link.remove();
-  }
-  URL.revokeObjectURL(url);
-}
-
 function scanRequest(): RuntimeRequest {
   return state.suspectedCompromiseDate
     ? { type: 'scan', suspectedCompromiseDate: state.suspectedCompromiseDate }
     : { type: 'scan' };
-}
-
-function isTestRuntime(): boolean {
-  return typeof navigator !== 'undefined' && navigator.userAgent.includes('jsdom');
 }
 
 async function sendMessage(message: RuntimeRequest): Promise<RuntimeResponse> {
@@ -215,7 +185,6 @@ function render(): void {
           <input data-control="suspected-date" type="date" value="${escapeHtml(state.suspectedCompromiseDate)}" />
         </label>
         <button type="button" data-action="scan">${state.loading ? 'Scanning...' : 'Scan browser profile'}</button>
-        <button type="button" class="secondary" data-action="export" ${inventory.length === 0 ? 'disabled' : ''}>Export checklist</button>
       </div>
     </header>
     <section class="warning-strip" role="note">

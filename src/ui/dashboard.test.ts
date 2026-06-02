@@ -60,6 +60,8 @@ describe('dashboard', () => {
     expect(text).toContain('Review GitHub session page');
     expect(text).toContain('Mark done');
     expect(text).not.toContain('Mark reviewed');
+    expect(text).not.toContain('Export checklist');
+    expect(document.querySelector('[data-action="export"]')).toBeNull();
     expect(text).toContain('Response date May 20, 2026');
     expect(text).toContain('current browser state, not historical proof');
     expect(text).toContain('Local cleanup does not revoke stolen cookies.');
@@ -139,31 +141,6 @@ describe('dashboard', () => {
     expect(normalizedText()).toContain('Reviewed');
   });
 
-  test('exports a privacy-minimal redacted checklist', async () => {
-    installRuntimeMock([{ ok: true, snapshot }]);
-    const createObjectURL = vi.fn((blob: Blob) => {
-      expect(blob).toBeInstanceOf(Blob);
-      return 'blob:checklist';
-    });
-    const revokeObjectURL = vi.fn();
-    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
-
-    await import('./dashboard');
-    document.querySelector<HTMLButtonElement>('[data-action="scan"]')?.click();
-    await waitForAsyncUi();
-    document.querySelector<HTMLButtonElement>('[data-action="export"]')?.click();
-
-    const blob = firstBlobArgument(createObjectURL.mock.calls);
-    const text = await readBlob(blob);
-
-    expect(text).toContain('Suspected compromise date: 2026-05-20');
-    expect(text).toContain('current browser state, not historical proof');
-    expect(text).toContain('github.com');
-    expect(text).toContain('does not revoke already stolen cookies');
-    expect(text).toContain('Likely session/auth cookie count: 1');
-    expect(text).not.toContain('user_session');
-    expect(text).not.toContain('secret-cookie-value');
-  });
 });
 
 function installRuntimeMock(responses: unknown[]) {
@@ -188,20 +165,4 @@ async function waitForAsyncUi(): Promise<void> {
 
 function normalizedText(): string {
   return document.body.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-}
-
-function firstBlobArgument(calls: Array<[Blob]>): Blob {
-  const call = calls[0];
-  if (!call) throw new Error('Expected URL.createObjectURL to be called');
-
-  return call[0];
-}
-
-async function readBlob(blob: Blob): Promise<string> {
-  const reader = new FileReader();
-  return await new Promise((resolve, reject) => {
-    reader.onerror = () => reject(reader.error);
-    reader.onload = () => resolve(String(reader.result));
-    reader.readAsText(blob);
-  });
 }
