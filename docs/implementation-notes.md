@@ -173,3 +173,20 @@
   - `npm test` passed: 11 files, 41 tests.
   - `npm run build` passed.
   - Chrome headless sizing audit passed at 1440px, 1100px, 760px, and 390px viewport widths: no horizontal overflow, shell width remained smaller than viewport with responsive margins, and every `button`/`.button-link` measured exactly 44px tall. Screenshot artifact: `output/sizing-typography-dashboard-smoke.png`.
+
+## Saved Scans, Completion State, and Fallback Login
+
+- Dashboard now requests `getLatestSnapshot` on startup and renders the saved scan if one exists, so scan results survive dashboard reloads and MV3 service-worker restarts.
+- `Mark done` now applies a green completed treatment to the full site row, not just the small reviewed pill.
+- Successful `Clear local data` removes that site row from the active dashboard immediately.
+- Sites without a known provider review/security URL now get a fallback action button that opens `https://<site>/login`.
+- The service worker now passes the suspected compromise date into inventory building.
+- Inventory building can exclude cookies created after the suspected compromise date when cookie creation metadata is present.
+  - Current Chrome extension cookie metadata does not normally expose creation time, so the UI copy explicitly says current cookies without creation-date metadata may still appear.
+- Fixed topbar control alignment so the suspected compromise date input and scan button share the same bottom edge.
+- Verification after this feature slice:
+  - Focused tests passed: `src/ui/dashboard.test.ts`, `src/core/inventoryBuilder.test.ts`, and `src/background/serviceWorker.test.ts`.
+  - `npm run typecheck` passed.
+  - `npm test` passed: 11 files, 44 tests.
+  - `npm run build` passed.
+  - Chrome headless smoke check passed against built `dist/dashboard.html`: saved scan loaded, fallback login rendered, `Mark done` greened the full row, `Clear local data` removed the row, and date input/scan button bottoms were exactly aligned. Screenshot artifact: `output/review-clear-dashboard-smoke.png`.

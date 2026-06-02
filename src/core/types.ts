@@ -9,6 +9,7 @@ export type RedactedCookie = {
   secure: boolean;
   session: boolean;
   sameSite: SameSiteStatus;
+  creationDate?: number;
   expirationDate?: number;
   storeId: string;
   partitioned: boolean;

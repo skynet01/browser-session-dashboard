@@ -6,6 +6,7 @@ import { escapeHtml, pluralize, riskLabel, sentenceCase, siteMatchesQuery } from
 
 type RuntimeRequest =
   | { type: 'scan'; suspectedCompromiseDate?: string }
+  | { type: 'getLatestSnapshot' }
   | { type: 'markReviewed'; siteKey: string }
   | { type: 'clearLocalSiteData'; siteKey: string; domains: string[]; origins: string[] };
 
@@ -35,11 +36,26 @@ const app = document.querySelector<HTMLElement>('#app');
 
 if (app) {
   render();
+  void loadLatestSnapshot();
   app.addEventListener('click', (event) => {
     void handleClick(event);
   });
   app.addEventListener('input', handleInput);
   app.addEventListener('change', handleInput);
+}
+
+async function loadLatestSnapshot(): Promise<void> {
+  const response = await sendMessage({ type: 'getLatestSnapshot' });
+
+  if (response.ok && response.snapshot) {
+    state.snapshot = response.snapshot;
+    state.suspectedCompromiseDate = response.snapshot.suspectedCompromiseDate ?? '';
+    state.actionLog = [`Loaded saved scan from ${formatDate(response.snapshot.scannedAt)}`, ...state.actionLog];
+  } else if (!response.ok) {
+    state.error = response.error;
+  }
+
+  render();
 }
 
 async function handleClick(event: Event): Promise<void> {
@@ -118,6 +134,13 @@ async function clearSite(site: SiteInventory): Promise<void> {
   });
 
   if (response.ok && response.result) {
+    if (state.snapshot) {
+      state.snapshot = {
+        ...state.snapshot,
+        inventory: state.snapshot.inventory.filter((item) => item.siteKey !== site.siteKey),
+        reviewedSiteKeys: state.snapshot.reviewedSiteKeys.filter((siteKey) => siteKey !== site.siteKey)
+      };
+    }
     state.actionLog = [
       `${site.siteKey}: local cleanup ${response.result.status}. ${response.result.warning}`,
       ...state.actionLog
@@ -202,7 +225,7 @@ function render(): void {
     ${state.snapshot?.suspectedCompromiseDate ? `
       <section class="context-strip">
         Date-based scan context uses ${escapeHtml(formatDateOnly(state.snapshot.suspectedCompromiseDate))} as the suspected compromise date.
-        Results reflect current browser state, not historical proof that cookies existed on that date.
+        Cookies with known creation dates after that date are hidden; Chrome may still show current cookies without creation-date metadata.
       </section>
     ` : ''}
     <section class="workspace">
@@ -239,8 +262,9 @@ function render(): void {
 
 function renderSiteRow(site: SiteInventory): string {
   const reviewed = state.snapshot?.reviewedSiteKeys.includes(site.siteKey) ?? false;
+  const primaryAction = site.providerAction ?? loginActionForSite(site.siteKey);
   return `
-    <article class="site-row risk-${site.risk}" data-site-row="${escapeHtml(site.siteKey)}">
+    <article class="site-row risk-${site.risk}${reviewed ? ' is-reviewed' : ''}" data-site-row="${escapeHtml(site.siteKey)}">
       <div class="site-main">
         <div class="site-title">
           <h2>${escapeHtml(site.siteKey)}</h2>
@@ -258,12 +282,19 @@ function renderSiteRow(site: SiteInventory): string {
         ${metric('Open tabs', site.openTabCount)}
       </div>
       <div class="row-actions row-actions--right">
-        ${site.providerAction ? `<a class="button-link" href="${escapeHtml(site.providerAction.url)}" target="_blank" rel="noreferrer">${escapeHtml(site.providerAction.label)}</a>` : ''}
+        <a class="button-link" href="${escapeHtml(primaryAction.url)}" target="_blank" rel="noreferrer" data-action="${site.providerAction ? 'provider' : 'login'}" data-site="${escapeHtml(site.siteKey)}">${escapeHtml(primaryAction.label)}</a>
         <button type="button" class="secondary" data-action="clear" data-site="${escapeHtml(site.siteKey)}">Clear local data</button>
         <button type="button" class="ghost" data-action="review" data-site="${escapeHtml(site.siteKey)}">Mark done</button>
       </div>
     </article>
   `;
+}
+
+function loginActionForSite(siteKey: string): { label: string; url: string } {
+  return {
+    label: `Open ${siteKey} login`,
+    url: `https://${siteKey}/login`
+  };
 }
 
 function filteredInventory(inventory: SiteInventory[]): SiteInventory[] {

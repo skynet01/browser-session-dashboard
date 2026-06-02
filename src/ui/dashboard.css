@@ -151,6 +151,7 @@ input {
 .topbar-actions,
 .row-actions {
   display: flex;
+  align-items: flex-end;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
@@ -328,6 +329,18 @@ label span {
   background:
     linear-gradient(180deg, var(--info-soft), transparent 78px),
     var(--card);
+}
+
+.site-row.is-reviewed {
+  border-color: oklch(0.82 0.08 138);
+  background:
+    linear-gradient(180deg, oklch(0.93 0.055 138), transparent 92px),
+    oklch(0.985 0.018 138);
+}
+
+.site-row.is-reviewed .risk-pill {
+  background: var(--accent-deep);
+  color: var(--surface);
 }
 
 .site-title {

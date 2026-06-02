@@ -50,7 +50,8 @@ describe('serviceWorker', () => {
     expect(collectTabs).toHaveBeenCalledWith(chromeMock);
     expect(buildInventory).toHaveBeenCalledWith(
       [{ name: 'sessionid', domain: '.example.com' }],
-      [{ url: 'https://example.com', host: 'example.com', origin: 'https://example.com' }]
+      [{ url: 'https://example.com', host: 'example.com', origin: 'https://example.com' }],
+      { suspectedCompromiseDate: '2026-05-20' }
     );
     expect(response).toMatchObject({
       ok: true,
