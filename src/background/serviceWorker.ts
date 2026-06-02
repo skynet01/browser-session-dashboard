@@ -1,3 +1,4 @@
+import { buildInventory as defaultBuildInventory } from '../core/inventoryBuilder';
 import type { OpenTabSummary, RedactedCookie, SiteInventory } from '../core/types';
 import { getLatestSnapshot, markSiteReviewed, saveScanSnapshot, type ScanSnapshot } from '../storage/snapshotStore';
 import { clearLocalSiteData, type LocalCleanupRequest, type LocalCleanupResult } from './chromeCleanup';
@@ -113,14 +114,6 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
 
 function responseWithSnapshot(snapshot: ScanSnapshot | undefined): RuntimeResponse {
   return snapshot === undefined ? { ok: true } : { ok: true, snapshot };
-}
-
-async function defaultBuildInventory(
-  cookies: RedactedCookie[],
-  tabs: OpenTabSummary[]
-): Promise<SiteInventory[]> {
-  const { buildInventory } = await import('../core/inventoryBuilder');
-  return buildInventory(cookies, tabs);
 }
 
 function parseRuntimeRequest(message: unknown): RuntimeRequest {

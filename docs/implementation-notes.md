@@ -72,3 +72,11 @@
 - Chrome-rendered dashboard smoke check passed for the empty state: title, exposure-boundary copy, cleanup warning, scan/export controls, severity/search filters, summary tiles, empty inventory state, and response log rendered without console exceptions.
 - Screenshot artifact was captured at `output/playwright/dashboard-smoke.png` and `output/` is ignored by git.
 - Official branded Chrome 148 did not honor `--load-extension` for unpacked extension loading from the command line, even with a fresh profile and copied `/tmp` path. This matches Chrome's command-line extension-loading restrictions in current branded builds. Full extension install QA should use manual `Load unpacked` in `chrome://extensions`, or a non-branded Chromium/Chrome-for-Testing binary if command-line automation is required.
+
+## Scan Crash Fix
+
+- Fixed a service-worker runtime crash reported as `window is not defined` when clicking Scan.
+- Root cause: `src/background/serviceWorker.ts` used a dynamic import for `inventoryBuilder`; Vite wrapped it in a browser-oriented preload helper that referenced `document` and `window`, which do not exist in MV3 service workers.
+- Fix: statically import `buildInventory` into the service worker so Vite bundles the inventory code directly without a DOM preload helper.
+- Regression coverage: `src/background/serviceWorker.test.ts` now exercises the default scan path with the real inventory builder.
+- Verification: `npm run typecheck`, `npm test`, and `npm run build` passed; `rg` found no `window`, `document`, `modulepreload`, or `vite:preloadError` references in `dist/assets/serviceWorker.js`.

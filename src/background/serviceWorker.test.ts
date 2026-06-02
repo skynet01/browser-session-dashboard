@@ -98,4 +98,37 @@ describe('serviceWorker', () => {
       error: 'cookies permission denied'
     });
   });
+
+  it('runs the default scan path without browser window globals in the service worker context', async () => {
+    const chromeMock = installChromeMock();
+    const router = createServiceWorkerRouter({
+      chromeApi: chromeMock,
+      collectCookies: vi.fn().mockResolvedValue([{
+        name: 'sessionid',
+        domain: '.github.com',
+        path: '/',
+        hostOnly: false,
+        httpOnly: true,
+        secure: true,
+        session: false,
+        sameSite: 'lax',
+        storeId: '0',
+        partitioned: false
+      }]),
+      collectTabs: vi.fn().mockResolvedValue([])
+    });
+
+    const response = await router({ type: 'scan' });
+
+    expect(response).toMatchObject({
+      ok: true,
+      snapshot: {
+        inventory: [{
+          siteKey: 'github.com',
+          risk: 'critical',
+          likelySessionCookieCount: 1
+        }]
+      }
+    });
+  });
 });
