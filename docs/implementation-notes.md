@@ -114,3 +114,17 @@
   - `npm test` passed: 11 files, 42 tests.
   - `npm run build` passed.
   - Chrome headless smoke check passed against built `dist/dashboard.html` with mocked scan data. Screenshot artifact: `output/retro-dashboard-smoke.png`.
+
+## Clean Retro Refinement
+
+- Reduced the visual density of the retro theme while preserving the reference aesthetic:
+  - Softer blue background grid with larger spacing.
+  - Thinner panel, input, button, metric, and chip borders.
+  - Shorter window title bars and smaller window-dot treatment.
+  - Smaller offset shadows for a cleaner modern dashboard feel.
+  - Quieter reason chips while keeping strong provider/action buttons.
+- Verification after this refinement:
+  - `npm run typecheck` passed.
+  - `npm test` passed: 11 files, 42 tests.
+  - `npm run build` passed.
+  - Chrome headless smoke check passed against built `dist/dashboard.html` with mocked scan data. Screenshot artifact: `output/clean-retro-dashboard-smoke.png`.
