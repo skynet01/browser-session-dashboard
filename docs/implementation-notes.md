@@ -31,3 +31,8 @@
 - Verification after this layer:
   - `npm test` passed: 6 files, 24 tests.
   - `npm run typecheck` passed.
+
+## Documentation Layer
+
+- Added manual QA, security model, and browser compatibility docs covering unpacked Chrome/Edge/Brave QA, local-only security boundaries, redaction checks, cleanup limitations, and target Chromium API compatibility.
+- The QA doc treats any cookie value found in UI text, storage snapshots, exported checklists, or console output as a release blocker.
