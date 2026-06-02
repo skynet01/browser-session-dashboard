@@ -23,6 +23,7 @@ export type ScanSnapshotInput = {
 export type ScanSnapshot = {
   id: string;
   scannedAt: string;
+  suspectedCompromiseDate?: string;
   inventory: SiteInventory[];
   reviewedSiteKeys: string[];
 };
@@ -37,6 +38,9 @@ export async function saveScanSnapshot(
     inventory: sanitizeInventory(input.inventory),
     reviewedSiteKeys: [...new Set(input.reviewedSiteKeys ?? [])].sort()
   };
+  if (typeof input.suspectedCompromiseDate === 'string') {
+    snapshot.suspectedCompromiseDate = input.suspectedCompromiseDate;
+  }
 
   const history = await getSnapshotHistory(chromeApi);
 

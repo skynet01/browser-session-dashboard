@@ -85,9 +85,17 @@ describe('buildInventory', () => {
     expect(getKnownProviderSiteKeys()).toEqual(expect.arrayContaining([
       'google.com',
       'microsoft.com',
+      'microsoftonline.com',
+      'live.com',
+      'outlook.com',
       'apple.com',
       'amazon.com',
       'github.com',
+      'paypal.com',
+      'ebay.com',
+      'netflix.com',
+      'reddit.com',
+      'yahoo.com',
       'facebook.com',
       'instagram.com',
       'x.com',
@@ -100,5 +108,10 @@ describe('buildInventory', () => {
 
     expect(getProviderAction('google.com')?.url).toContain('myaccount.google.com');
     expect(getProviderAction('github.com')?.url).toContain('github.com/settings/security');
+    expect(getProviderAction('microsoftonline.com')?.url).toContain('mysignins.microsoft.com');
+    expect(getProviderAction('live.com')?.url).toContain('account.live.com/Activity');
+    expect(getProviderAction('paypal.com')?.url).toContain('paypal.com/myaccount/security');
+    expect(getProviderAction('ebay.com')?.url).toContain('signin.ebay.com');
+    expect(getProviderAction('netflix.com')?.url).toContain('ManageDevices');
   });
 });

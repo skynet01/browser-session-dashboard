@@ -80,3 +80,22 @@
 - Fix: statically import `buildInventory` into the service worker so Vite bundles the inventory code directly without a DOM preload helper.
 - Regression coverage: `src/background/serviceWorker.test.ts` now exercises the default scan path with the real inventory builder.
 - Verification: `npm run typecheck`, `npm test`, and `npm run build` passed; `rg` found no `window`, `document`, `modulepreload`, or `vite:preloadError` references in `dist/assets/serviceWorker.js`.
+
+## Provider Review Links and Response Date
+
+- Expanded the provider action directory for common high-value domains:
+  - Microsoft work and personal account variants: `microsoft.com`, `microsoftonline.com`, `live.com`, and `outlook.com`.
+  - Commerce/payment/media/community accounts: PayPal, eBay, Netflix, Reddit, and Yahoo.
+  - Existing provider labels now distinguish remote provider review links from the local reviewed/done state.
+- Renamed the row-local state action from `Mark reviewed` to `Mark done`; provider buttons remain the links that open session, security, sign-in, or device pages.
+- Added an optional suspected compromise date input to the scan controls.
+  - The service worker validates and stores the date as `YYYY-MM-DD` on the redacted scan snapshot.
+  - The dashboard summary and exported checklist include the selected date as response context.
+  - Copy explicitly says date-based scans reflect current browser state, not historical proof that cookies existed on the suspected compromise date.
+- Adjusted row layout so action buttons sit on the right side on desktop and stack naturally on smaller screens.
+- Kept the `Likely sessions` metric label on one line to avoid awkward row wrapping.
+- Verification after this batch:
+  - `npm run typecheck` passed.
+  - `npm test` passed: 11 files, 42 tests.
+  - `npm run build` passed.
+  - Chrome headless smoke check passed against built `dist/dashboard.html` with a mocked extension runtime: response date rendered, PayPal provider review button rendered, `Mark done` rendered, row actions measured on the right side at default dashboard width, and `Likely sessions` stayed within a single metric row.

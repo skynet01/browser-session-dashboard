@@ -102,6 +102,10 @@ input {
   justify-content: flex-end;
 }
 
+.date-control {
+  min-width: 220px;
+}
+
 .eyebrow {
   color: #5e6b61;
   font-size: 0.76rem;
@@ -131,6 +135,7 @@ h1 {
 }
 
 .warning-strip,
+.context-strip,
 .error-banner {
   border-radius: 6px;
   margin-top: 16px;
@@ -143,6 +148,12 @@ h1 {
   color: #4b3710;
 }
 
+.context-strip {
+  border: 1px solid #bdd2cc;
+  background: #edf6f3;
+  color: #23423b;
+}
+
 .error-banner {
   border: 1px solid #c66c64;
   background: #fff0ed;
@@ -151,7 +162,7 @@ h1 {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
   border: 1px solid #d7ded4;
@@ -208,7 +219,10 @@ label span {
 
 .site-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-areas:
+    "main actions"
+    "metrics actions";
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 240px);
   gap: 14px;
   align-items: start;
   border: 1px solid #d3ddd5;
@@ -216,6 +230,10 @@ label span {
   border-radius: 8px;
   background: #ffffff;
   padding: 14px;
+}
+
+.site-main {
+  grid-area: main;
 }
 
 .risk-critical {
@@ -291,6 +309,7 @@ label span {
 }
 
 .site-metrics {
+  grid-area: metrics;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
@@ -308,6 +327,7 @@ label span {
   font-weight: 750;
   padding: 9px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .site-metrics strong {
@@ -317,8 +337,18 @@ label span {
 }
 
 .row-actions {
-  grid-column: 1 / -1;
+  grid-area: actions;
   justify-content: flex-start;
+}
+
+.row-actions--right {
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.row-actions--right button,
+.row-actions--right .button-link {
+  width: 100%;
 }
 
 .action-panel {
@@ -362,7 +392,6 @@ label span {
 
   .topbar,
   .workspace,
-  .site-row,
   .toolbar {
     grid-template-columns: 1fr;
   }
@@ -372,7 +401,26 @@ label span {
     justify-content: flex-start;
   }
 
+  .row-actions--right {
+    flex-direction: row;
+  }
+
+  .row-actions--right button,
+  .row-actions--right .button-link {
+    width: auto;
+  }
+
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .site-row {
+    grid-template-areas:
+      "main"
+      "metrics"
+      "actions";
+    grid-template-columns: 1fr;
   }
 }

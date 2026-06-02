@@ -43,7 +43,7 @@ type ChromeApi = {
 };
 
 type RuntimeRequest =
-  | { type: 'scan' }
+  | { type: 'scan'; suspectedCompromiseDate?: string }
   | { type: 'getLatestSnapshot' }
   | { type: 'markReviewed'; siteKey: string }
   | ({ type: 'clearLocalSiteData' } & LocalCleanupRequest);
@@ -92,7 +92,10 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
           const cookies = (await collectCookies(chromeApi)) ?? [];
           const tabs = (await collectTabs(chromeApi)) ?? [];
           const inventory = (await buildInventoryFromInputs(cookies, tabs)) ?? [];
-          const snapshot = await saveScanSnapshot({ inventory }, chromeApi);
+          const snapshot = await saveScanSnapshot({
+            inventory,
+            suspectedCompromiseDate: request.suspectedCompromiseDate
+          }, chromeApi);
 
           return { ok: true, snapshot };
         }
@@ -128,8 +131,13 @@ function isRuntimeRequest(message: unknown): message is RuntimeRequest {
   if (typeof message !== 'object' || message === null || !('type' in message)) return false;
 
   const type = (message as { type: unknown }).type;
-  return type === 'scan'
-    || type === 'getLatestSnapshot'
+  if (type === 'scan') {
+    const suspectedCompromiseDate = (message as { suspectedCompromiseDate?: unknown }).suspectedCompromiseDate;
+    return suspectedCompromiseDate === undefined
+      || (typeof suspectedCompromiseDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(suspectedCompromiseDate));
+  }
+
+  return type === 'getLatestSnapshot'
     || type === 'markReviewed'
     || type === 'clearLocalSiteData';
 }

@@ -2,6 +2,7 @@ import type { SiteInventory } from './types';
 
 export type ResponseChecklistOptions = {
   privacyMinimal?: boolean;
+  suspectedCompromiseDate?: string;
 };
 
 export function buildResponseChecklist(
@@ -14,6 +15,7 @@ export function buildResponseChecklist(
     'This export is redacted. It includes local cookie metadata only and never includes cookie values.',
     'Local cleanup logs out this browser profile, but it does not revoke already stolen cookies or server-side sessions.',
     'Treat these entries as likely exposure indicators, not proof that any specific session was stolen.',
+    ...responseWindowLines(options),
     ''
   ];
 
@@ -22,6 +24,15 @@ export function buildResponseChecklist(
   }
 
   return lines.join('\n').trimEnd();
+}
+
+function responseWindowLines(options: ResponseChecklistOptions): string[] {
+  if (!options.suspectedCompromiseDate) return [];
+
+  return [
+    `Suspected compromise date: ${options.suspectedCompromiseDate}`,
+    'Date-based scans reflect current browser state, not historical proof that cookies existed on the suspected compromise date.'
+  ];
 }
 
 function siteLines(site: SiteInventory, options: ResponseChecklistOptions): string[] {

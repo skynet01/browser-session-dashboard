@@ -4,6 +4,7 @@ import type { ScanSnapshot } from '../storage/snapshotStore';
 const snapshot: ScanSnapshot = {
   id: 'scan-1',
   scannedAt: '2026-06-02T20:00:00.000Z',
+  suspectedCompromiseDate: '2026-05-20',
   reviewedSiteKeys: [],
   inventory: [
     {
@@ -16,7 +17,7 @@ const snapshot: ScanSnapshot = {
       risk: 'critical',
       reasons: ['known high-value provider', 'likely session/auth cookies present'],
       providerAction: {
-        label: 'Review GitHub sessions',
+        label: 'Review GitHub session page',
         url: 'https://github.com/settings/security',
         instructions: 'Review sessions and tokens.'
       }
@@ -44,6 +45,9 @@ describe('dashboard', () => {
     installRuntimeMock([{ ok: true, snapshot }]);
 
     await import('./dashboard');
+    document.querySelector<HTMLInputElement>('[data-control="suspected-date"]')!.value = '2026-05-20';
+    document.querySelector<HTMLInputElement>('[data-control="suspected-date"]')!
+      .dispatchEvent(new Event('change', { bubbles: true }));
     document.querySelector<HTMLButtonElement>('[data-action="scan"]')?.click();
     await waitForAsyncUi();
 
@@ -53,9 +57,33 @@ describe('dashboard', () => {
     expect(text).toContain('github.com');
     expect(text).toContain('critical');
     expect(text).toContain('Known high-value provider');
+    expect(text).toContain('Review GitHub session page');
+    expect(text).toContain('Mark done');
+    expect(text).not.toContain('Mark reviewed');
+    expect(text).toContain('Response date May 20, 2026');
+    expect(text).toContain('current browser state, not historical proof');
     expect(text).toContain('Local cleanup does not revoke stolen cookies.');
     expect(text).not.toContain('secret-cookie-value');
     expect(text).not.toContain('cookie value:');
+
+    const githubRow = document.querySelector<HTMLElement>('[data-site-row="github.com"]');
+    expect(githubRow?.querySelector('.row-actions--right')).not.toBeNull();
+  });
+
+  test('sends the suspected compromise date with scans', async () => {
+    const sendMessage = installRuntimeMock([{ ok: true, snapshot }]);
+
+    await import('./dashboard');
+    document.querySelector<HTMLInputElement>('[data-control="suspected-date"]')!.value = '2026-05-20';
+    document.querySelector<HTMLInputElement>('[data-control="suspected-date"]')!
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    document.querySelector<HTMLButtonElement>('[data-action="scan"]')?.click();
+    await waitForAsyncUi();
+
+    expect(sendMessage).toHaveBeenCalledWith({
+      type: 'scan',
+      suspectedCompromiseDate: '2026-05-20'
+    });
   });
 
   test('filters inventory by severity and domain search', async () => {
@@ -128,6 +156,8 @@ describe('dashboard', () => {
     const blob = firstBlobArgument(createObjectURL.mock.calls);
     const text = await readBlob(blob);
 
+    expect(text).toContain('Suspected compromise date: 2026-05-20');
+    expect(text).toContain('current browser state, not historical proof');
     expect(text).toContain('github.com');
     expect(text).toContain('does not revoke already stolen cookies');
     expect(text).toContain('Likely session/auth cookie count: 1');

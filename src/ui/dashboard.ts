@@ -6,7 +6,7 @@ import type { ScanSnapshot } from '../storage/snapshotStore';
 import { escapeHtml, pluralize, riskLabel, sentenceCase, siteMatchesQuery } from './components';
 
 type RuntimeRequest =
-  | { type: 'scan' }
+  | { type: 'scan'; suspectedCompromiseDate?: string }
   | { type: 'markReviewed'; siteKey: string }
   | { type: 'clearLocalSiteData'; siteKey: string; domains: string[]; origins: string[] };
 
@@ -18,6 +18,7 @@ type DashboardState = {
   snapshot?: ScanSnapshot;
   severity: SiteRisk | 'all';
   query: string;
+  suspectedCompromiseDate: string;
   loading: boolean;
   error?: string;
   actionLog: string[];
@@ -26,6 +27,7 @@ type DashboardState = {
 const state: DashboardState = {
   severity: 'all',
   query: '',
+  suspectedCompromiseDate: '',
   loading: false,
   actionLog: []
 };
@@ -83,6 +85,10 @@ function handleInput(event: Event): void {
     state.query = target.value;
   }
 
+  if (target.dataset.control === 'suspected-date') {
+    state.suspectedCompromiseDate = target.value;
+  }
+
   render();
 }
 
@@ -91,7 +97,7 @@ async function scan(): Promise<void> {
   delete state.error;
   render();
 
-  const response = await sendMessage({ type: 'scan' });
+  const response = await sendMessage(scanRequest());
 
   state.loading = false;
   if (response.ok && response.snapshot) {
@@ -143,8 +149,12 @@ async function markReviewed(site: SiteInventory): Promise<void> {
 }
 
 function exportChecklist(): void {
-  const inventory = state.snapshot?.inventory ?? [];
-  const checklist = buildResponseChecklist(inventory, { privacyMinimal: true });
+  const snapshot = state.snapshot;
+  const inventory = snapshot?.inventory ?? [];
+  const checklist = buildResponseChecklist(inventory, {
+    privacyMinimal: true,
+    ...(snapshot?.suspectedCompromiseDate ? { suspectedCompromiseDate: snapshot.suspectedCompromiseDate } : {})
+  });
   const blob = new Blob([checklist], { type: 'text/markdown;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -156,6 +166,12 @@ function exportChecklist(): void {
     link.remove();
   }
   URL.revokeObjectURL(url);
+}
+
+function scanRequest(): RuntimeRequest {
+  return state.suspectedCompromiseDate
+    ? { type: 'scan', suspectedCompromiseDate: state.suspectedCompromiseDate }
+    : { type: 'scan' };
 }
 
 function isTestRuntime(): boolean {
@@ -194,6 +210,10 @@ function render(): void {
         </p>
       </div>
       <div class="topbar-actions">
+        <label class="date-control">
+          <span>Suspected compromise date</span>
+          <input data-control="suspected-date" type="date" value="${escapeHtml(state.suspectedCompromiseDate)}" />
+        </label>
         <button type="button" data-action="scan">${state.loading ? 'Scanning...' : 'Scan browser profile'}</button>
         <button type="button" class="secondary" data-action="export" ${inventory.length === 0 ? 'disabled' : ''}>Export checklist</button>
       </div>
@@ -207,8 +227,15 @@ function render(): void {
       ${summaryTile('Sites', pluralize(inventory.length, 'site'))}
       ${summaryTile('Critical', String(countRisk(inventory, 'critical')))}
       ${summaryTile('High', String(countRisk(inventory, 'high')))}
+      ${summaryTile('Response date', state.snapshot?.suspectedCompromiseDate ? formatDateOnly(state.snapshot.suspectedCompromiseDate) : 'Not set')}
       ${summaryTile('Scanned', state.snapshot ? formatDate(state.snapshot.scannedAt) : 'Not yet')}
     </section>
+    ${state.snapshot?.suspectedCompromiseDate ? `
+      <section class="context-strip">
+        Date-based scan context uses ${escapeHtml(formatDateOnly(state.snapshot.suspectedCompromiseDate))} as the suspected compromise date.
+        Results reflect current browser state, not historical proof that cookies existed on that date.
+      </section>
+    ` : ''}
     <section class="workspace">
       <div class="inventory-panel">
         <div class="toolbar">
@@ -244,7 +271,7 @@ function render(): void {
 function renderSiteRow(site: SiteInventory): string {
   const reviewed = state.snapshot?.reviewedSiteKeys.includes(site.siteKey) ?? false;
   return `
-    <article class="site-row risk-${site.risk}">
+    <article class="site-row risk-${site.risk}" data-site-row="${escapeHtml(site.siteKey)}">
       <div class="site-main">
         <div class="site-title">
           <h2>${escapeHtml(site.siteKey)}</h2>
@@ -261,10 +288,10 @@ function renderSiteRow(site: SiteInventory): string {
         ${metric('Likely sessions', site.likelySessionCookieCount)}
         ${metric('Open tabs', site.openTabCount)}
       </div>
-      <div class="row-actions">
+      <div class="row-actions row-actions--right">
         ${site.providerAction ? `<a class="button-link" href="${escapeHtml(site.providerAction.url)}" target="_blank" rel="noreferrer">${escapeHtml(site.providerAction.label)}</a>` : ''}
         <button type="button" class="secondary" data-action="clear" data-site="${escapeHtml(site.siteKey)}">Clear local data</button>
-        <button type="button" class="ghost" data-action="review" data-site="${escapeHtml(site.siteKey)}">Mark reviewed</button>
+        <button type="button" class="ghost" data-action="review" data-site="${escapeHtml(site.siteKey)}">Mark done</button>
       </div>
     </article>
   `;
@@ -289,7 +316,7 @@ function countRisk(inventory: SiteInventory[], risk: SiteRisk): number {
 }
 
 function summaryTile(label: string, value: string): string {
-  return `<div class="summary-tile"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+  return `<div class="summary-tile"><span>${escapeHtml(label)}</span> <strong>${escapeHtml(value)}</strong></div>`;
 }
 
 function severityOption(value: DashboardState['severity'], label: string): string {
@@ -313,4 +340,15 @@ function formatDate(value: string): string {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(value));
+}
+
+function formatDateOnly(value: string): string {
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return value;
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(new Date(year, month - 1, day));
 }

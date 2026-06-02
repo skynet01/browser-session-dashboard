@@ -41,7 +41,10 @@ describe('serviceWorker', () => {
       buildInventory
     });
 
-    const response = await sendRuntimeMessage(chromeMock, { type: 'scan' });
+    const response = await sendRuntimeMessage(chromeMock, {
+      type: 'scan',
+      suspectedCompromiseDate: '2026-05-20'
+    });
 
     expect(collectCookies).toHaveBeenCalledWith(chromeMock);
     expect(collectTabs).toHaveBeenCalledWith(chromeMock);
@@ -51,7 +54,10 @@ describe('serviceWorker', () => {
     );
     expect(response).toMatchObject({
       ok: true,
-      snapshot: { inventory }
+      snapshot: {
+        inventory,
+        suspectedCompromiseDate: '2026-05-20'
+      }
     });
     expect(JSON.stringify(chromeMock.__storage)).not.toContain('"value"');
   });
