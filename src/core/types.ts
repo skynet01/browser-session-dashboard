@@ -16,8 +16,11 @@ export type RedactedCookie = {
 
 export type OpenTabSummary = {
   id: number;
+  windowId?: number;
   url: string;
   title?: string;
+  host?: string;
+  origin?: string;
 };
 
 export type ProviderAction = {

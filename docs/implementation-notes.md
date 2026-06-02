@@ -36,3 +36,16 @@
 
 - Added manual QA, security model, and browser compatibility docs covering unpacked Chrome/Edge/Brave QA, local-only security boundaries, redaction checks, cleanup limitations, and target Chromium API compatibility.
 - The QA doc treats any cookie value found in UI text, storage snapshots, exported checklists, or console output as a release blocker.
+
+## Background, Storage, and Chrome API Layer
+
+- Added a narrow `ChromeApi` adapter type in `src/background/chromeApi.ts` so production code uses only APIs supported by the target Chromium browsers and tests can mock that smaller surface.
+- Added `chromeCookies`, `chromeTabs`, and `chromeCleanup` wrappers:
+  - Cookie collection immediately maps raw `chrome.cookies.Cookie` objects to `RedactedCookie` metadata and drops `value`.
+  - Tab collection keeps only HTTP/HTTPS URL, host, origin, title, and IDs; it does not read page content.
+  - Cleanup calls `chrome.browsingData.remove()` with origin-scoped cookie/storage types and returns an audit result that explicitly says remote revocation was not attempted.
+- Added `snapshotStore` for redacted `chrome.storage.local` snapshots and reviewed-site state across MV3 service-worker restarts.
+- Added service-worker routing for `scan`, `getLatestSnapshot`, `markReviewed`, and `clearLocalSiteData` messages, plus extension-icon dashboard launch.
+- Verification after this layer:
+  - `npm test` passed: 11 files, 37 tests.
+  - `npm run typecheck` passed.
