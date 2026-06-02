@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Browser Session Compromise Dashboard",
+  "description": "Inventory local browser sessions that may be exposed after suspected cookie theft.",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "Review browser sessions"
+  },
+  "background": {
+    "service_worker": "assets/serviceWorker.js",
+    "type": "module"
+  },
+  "permissions": ["browsingData", "cookies", "storage", "tabs"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "incognito": "spanning"
+}
