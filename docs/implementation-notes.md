@@ -128,3 +128,18 @@
   - `npm test` passed: 11 files, 42 tests.
   - `npm run build` passed.
   - Chrome headless smoke check passed against built `dist/dashboard.html` with mocked scan data. Screenshot artifact: `output/clean-retro-dashboard-smoke.png`.
+
+## Soft Rounded Dashboard Redesign
+
+- Replaced the retro theme with a calmer dashboard style based on the supplied Dribbble reference:
+  - Quiet gray page background with a large rounded white app shell.
+  - Soft metric cards, rounded filters, pill buttons, and low-contrast borders.
+  - Restrained olive green primary action/accent color.
+  - Subtle severity tints on inventory rows instead of heavy outlines or window bars.
+  - Cleaner information density while preserving the same dashboard behavior and markup.
+- `impeccable` context preflight was partially blocked because the repo does not have `PRODUCT.md` or `DESIGN.md`; the pass still applied its product-UI checklist for restraint, hierarchy, color, layout, and avoiding overdecorated chrome.
+- Verification after this redesign:
+  - `npm run typecheck` passed.
+  - `npm test` passed: 11 files, 42 tests.
+  - `npm run build` passed.
+  - Chrome headless smoke check passed against built `dist/dashboard.html` with mocked scan data. Screenshot artifact: `output/dribbble-dashboard-smoke.png`.
