@@ -64,3 +64,11 @@
   - `npm run typecheck` passed.
   - `npm test` passed: 11 files, 40 tests.
   - `npm run build` passed.
+
+## Chrome Smoke Test
+
+- Set `base: './'` in `vite.config.ts` so built HTML uses extension-safe relative asset URLs such as `./assets/dashboard.js`.
+- Built `dist/`, copied it to `/tmp/chrome-session-extension-dist-copy`, and opened the dashboard in installed Google Chrome 148 via a local static server for visual/render verification.
+- Chrome-rendered dashboard smoke check passed for the empty state: title, exposure-boundary copy, cleanup warning, scan/export controls, severity/search filters, summary tiles, empty inventory state, and response log rendered without console exceptions.
+- Screenshot artifact was captured at `output/playwright/dashboard-smoke.png` and `output/` is ignored by git.
+- Official branded Chrome 148 did not honor `--load-extension` for unpacked extension loading from the command line, even with a fresh profile and copied `/tmp` path. This matches Chrome's command-line extension-loading restrictions in current branded builds. Full extension install QA should use manual `Load unpacked` in `chrome://extensions`, or a non-branded Chromium/Chrome-for-Testing binary if command-line automation is required.
