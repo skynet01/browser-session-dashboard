@@ -1,8 +1,14 @@
 import type { OpenTabSummary } from '../core/types';
-import { chromeError, defaultChromeApi, type ChromeApi } from './chromeApi';
+
+type ChromeApi = {
+  runtime: { readonly lastError: { message?: string | undefined } | undefined };
+  tabs: {
+    query(queryInfo: chrome.tabs.QueryInfo, callback: (tabs: chrome.tabs.Tab[]) => void): void;
+  };
+};
 
 export async function collectOpenTabContexts(
-  chromeApi: ChromeApi = defaultChromeApi()
+  chromeApi: ChromeApi = chrome
 ): Promise<OpenTabSummary[]> {
   return await new Promise((resolve, reject) => {
     chromeApi.tabs.query({}, (tabs) => {
@@ -38,4 +44,9 @@ function tabSummary(tab: chrome.tabs.Tab): OpenTabSummary[] {
   } catch {
     return [];
   }
+}
+
+function chromeError(chromeApi: ChromeApi): Error | undefined {
+  const message = chromeApi.runtime.lastError?.message;
+  return message ? new Error(message) : undefined;
 }

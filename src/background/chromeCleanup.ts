@@ -1,4 +1,13 @@
-import { chromeError, defaultChromeApi, type ChromeApi } from './chromeApi';
+type ChromeApi = {
+  runtime: { readonly lastError: { message?: string | undefined } | undefined };
+  browsingData: {
+    remove(
+      options: chrome.browsingData.RemovalOptions,
+      dataToRemove: chrome.browsingData.DataTypeSet,
+      callback?: () => void
+    ): void;
+  };
+};
 
 export type LocalCleanupRequest = {
   siteKey: string;
@@ -34,7 +43,7 @@ const REMOVED_DATA_TYPES = [
 
 export async function clearLocalSiteData(
   request: LocalCleanupRequest,
-  chromeApi: ChromeApi = defaultChromeApi()
+  chromeApi: ChromeApi = chrome
 ): Promise<LocalCleanupResult> {
   const requestedAt = new Date().toISOString();
   const requestedDomains = [...new Set(request.domains ?? [])];
@@ -117,4 +126,9 @@ function normalizeOrigin(input: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function chromeError(chromeApi: ChromeApi): Error | undefined {
+  const message = chromeApi.runtime.lastError?.message;
+  return message ? new Error(message) : undefined;
 }

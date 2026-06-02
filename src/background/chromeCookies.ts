@@ -1,8 +1,14 @@
 import type { RedactedCookie } from '../core/types';
-import { chromeError, defaultChromeApi, type ChromeApi } from './chromeApi';
+
+type ChromeApi = {
+  runtime: { readonly lastError: { message?: string | undefined } | undefined };
+  cookies: {
+    getAll(details: chrome.cookies.GetAllDetails, callback: (cookies: chrome.cookies.Cookie[]) => void): void;
+  };
+};
 
 export async function collectRedactedCookies(
-  chromeApi: ChromeApi = defaultChromeApi()
+  chromeApi: ChromeApi = chrome
 ): Promise<RedactedCookie[]> {
   return await new Promise((resolve, reject) => {
     chromeApi.cookies.getAll({}, (cookies) => {
@@ -36,4 +42,9 @@ function redactCookie(cookie: chrome.cookies.Cookie): RedactedCookie {
   }
 
   return redacted;
+}
+
+function chromeError(chromeApi: ChromeApi): Error | undefined {
+  const message = chromeApi.runtime.lastError?.message;
+  return message ? new Error(message) : undefined;
 }

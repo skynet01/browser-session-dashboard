@@ -1,9 +1,45 @@
 import type { OpenTabSummary, RedactedCookie, SiteInventory } from '../core/types';
 import { getLatestSnapshot, markSiteReviewed, saveScanSnapshot, type ScanSnapshot } from '../storage/snapshotStore';
-import { defaultChromeApi, type ChromeApi } from './chromeApi';
 import { clearLocalSiteData, type LocalCleanupRequest, type LocalCleanupResult } from './chromeCleanup';
 import { collectRedactedCookies } from './chromeCookies';
 import { collectOpenTabContexts } from './chromeTabs';
+
+type ChromeApi = {
+  runtime: {
+    readonly lastError: { message?: string | undefined } | undefined;
+    getURL(path: string): string;
+    onMessage: {
+      addListener(
+        listener: (
+          message: unknown,
+          sender: chrome.runtime.MessageSender,
+          sendResponse: (response?: unknown) => void
+        ) => boolean | undefined
+      ): void;
+    };
+  };
+  action: { onClicked: { addListener(listener: () => void): void } };
+  cookies: {
+    getAll(details: chrome.cookies.GetAllDetails, callback: (cookies: chrome.cookies.Cookie[]) => void): void;
+  };
+  tabs: {
+    create(properties: chrome.tabs.CreateProperties, callback?: (tab: chrome.tabs.Tab) => void): void;
+    query(queryInfo: chrome.tabs.QueryInfo, callback: (tabs: chrome.tabs.Tab[]) => void): void;
+  };
+  browsingData: {
+    remove(
+      options: chrome.browsingData.RemovalOptions,
+      dataToRemove: chrome.browsingData.DataTypeSet,
+      callback?: () => void
+    ): void;
+  };
+  storage: {
+    local: {
+      get(key: string, callback: (items: Record<string, unknown>) => void): void;
+      set(items: Record<string, unknown>, callback?: () => void): void;
+    };
+  };
+};
 
 type RuntimeRequest =
   | { type: 'scan' }
@@ -23,7 +59,7 @@ type RouterDependencies = {
   clearLocalSiteData?: (request: LocalCleanupRequest, chromeApi: ChromeApi) => Promise<LocalCleanupResult>;
 };
 
-export function initServiceWorker(dependencies: RouterDependencies = { chromeApi: defaultChromeApi() }): void {
+export function initServiceWorker(dependencies: RouterDependencies = { chromeApi: chrome }): void {
   const { chromeApi } = dependencies;
   const router = createServiceWorkerRouter(dependencies);
 
@@ -106,5 +142,5 @@ function isRuntimeRequest(message: unknown): message is RuntimeRequest {
 }
 
 if (typeof globalThis.chrome !== 'undefined') {
-  initServiceWorker({ chromeApi: defaultChromeApi() });
+  initServiceWorker({ chromeApi: globalThis.chrome });
 }
