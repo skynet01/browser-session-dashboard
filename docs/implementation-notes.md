@@ -49,3 +49,18 @@
 - Verification after this layer:
   - `npm test` passed: 11 files, 37 tests.
   - `npm run typecheck` passed.
+
+## Dashboard UI Layer
+
+- Replaced the placeholder UI with a dashboard controller and component helpers:
+  - Scan button calls the service worker and renders latest `SiteInventory` results.
+  - Summary band shows total sites, critical count, high count, and scan time.
+  - Inventory rows show domain grouping, severity, reasons, cookie counts, likely session-cookie count, open tabs, provider actions, local cleanup, and reviewed state.
+  - Severity and domain search filters update the visible inventory.
+  - Local cleanup requires confirmation and repeats the warning that cleanup does not revoke stolen cookies.
+  - Checklist export uses privacy-minimal mode so cookie names are omitted by default.
+- Styling follows the security-response direction: compact, restrained, scan-friendly, and action-oriented.
+- Verification after this layer:
+  - `npm run typecheck` passed.
+  - `npm test` passed: 11 files, 40 tests.
+  - `npm run build` passed.
