@@ -23,6 +23,9 @@ type ChromeApi = {
   cookies: {
     getAll(details: chrome.cookies.GetAllDetails, callback: (cookies: chrome.cookies.Cookie[]) => void): void;
   };
+  permissions?: {
+    contains(permissions: chrome.permissions.Permissions, callback: (granted: boolean) => void): void;
+  };
   tabs: {
     create(properties: chrome.tabs.CreateProperties, callback?: (tab: chrome.tabs.Tab) => void): void;
     query(queryInfo: chrome.tabs.QueryInfo, callback: (tabs: chrome.tabs.Tab[]) => void): void;
@@ -51,6 +54,7 @@ type RuntimeRequest =
 
 export type ExtensionCapabilities = {
   localCleanup: boolean;
+  allSitesAccess?: boolean;
 };
 
 type RuntimeResponse =
@@ -113,7 +117,7 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
         case 'getLatestSnapshot':
           return responseWithSnapshot(await getLatestSnapshot(chromeApi));
         case 'getCapabilities':
-          return { ok: true, capabilities: browserCapabilities(chromeApi) };
+          return { ok: true, capabilities: await browserCapabilities(chromeApi) };
         case 'markReviewed':
           return responseWithSnapshot(await markSiteReviewed(request.siteKey, chromeApi));
         case 'clearLocalSiteData':
@@ -156,10 +160,25 @@ function isRuntimeRequest(message: unknown): message is RuntimeRequest {
     || type === 'clearLocalSiteData';
 }
 
-function browserCapabilities(chromeApi: ChromeApi): ExtensionCapabilities {
+async function browserCapabilities(chromeApi: ChromeApi): Promise<ExtensionCapabilities> {
+  const allSitesAccess = await checkAllSitesAccess(chromeApi);
   return {
-    localCleanup: typeof chromeApi.browsingData?.remove === 'function'
+    localCleanup: typeof chromeApi.browsingData?.remove === 'function',
+    ...(allSitesAccess === undefined ? {} : { allSitesAccess })
   };
+}
+
+async function checkAllSitesAccess(chromeApi: ChromeApi): Promise<boolean | undefined> {
+  if (typeof chromeApi.permissions?.contains !== 'function') return undefined;
+
+  return await new Promise((resolve) => {
+    chromeApi.permissions?.contains({
+      origins: ['http://*/*', 'https://*/*']
+    }, (granted) => {
+      const error = chromeApi.runtime.lastError?.message;
+      resolve(error ? undefined : granted);
+    });
+  });
 }
 
 if (typeof globalThis.chrome !== 'undefined') {

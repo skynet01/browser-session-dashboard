@@ -263,9 +263,30 @@ describe('dashboard', () => {
     expect(document.querySelector<HTMLButtonElement>('[data-action="clear"][data-site="github.com"]')?.disabled).toBe(true);
   });
 
+  test('blocks scans when all-site website access is missing', async () => {
+    const sendMessage = installRuntimeMock([{ ok: true }], {
+      localCleanup: false,
+      allSitesAccess: false
+    });
+
+    await import('./dashboard');
+    await waitForAsyncUi();
+    document.querySelector<HTMLButtonElement>('[data-action="scan"]')?.click();
+    await waitForAsyncUi();
+
+    expect(sendMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'scan' }));
+    expect(normalizedText()).toContain('Website access is not granted for all websites');
+    expect(normalizedText()).toContain('Always Allow on Every Website');
+  });
+
 });
 
-function installRuntimeMock(responses: unknown[], capabilities = { localCleanup: true }) {
+type TestCapabilities = {
+  localCleanup: boolean;
+  allSitesAccess?: boolean;
+};
+
+function installRuntimeMock(responses: unknown[], capabilities: TestCapabilities = { localCleanup: true }) {
   const sendMessage = vi.fn(async (message: { type?: string }) => {
     if (message.type === 'getCapabilities') {
       return { ok: true, capabilities };

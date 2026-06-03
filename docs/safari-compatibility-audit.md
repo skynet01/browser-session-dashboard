@@ -101,7 +101,8 @@ This confirms macOS recognizes the converted Safari Web Extension. Enabling it i
 ## Remaining Safari Work Before App Store Submission
 
 - Run manual Safari QA after enabling the extension in Safari Settings.
-- Verify `chrome.cookies.getAll`, `chrome.tabs.query`, and `chrome.storage.local` behavior in Safari with real profile data.
+- Grant website access for all websites before scan QA. In Safari, enabling the extension is not enough; host permissions are separately granted from the extension toolbar item or Safari Settings > Extensions.
+- Verify `chrome.cookies.getAll`, `chrome.tabs.query`, and `chrome.storage.local` behavior in Safari with real profile data after all-site website access is granted.
 - Verify provider links open correctly.
 - Verify cleanup controls are disabled and the unsupported-cleanup copy appears.
 - Decide whether to implement native Safari website-data cleanup through the containing app. That would require new native code and a separate privacy/security review.
@@ -112,4 +113,3 @@ This confirms macOS recognizes the converted Safari Web Extension. Enabling it i
 Recommended wording:
 
 Safari support is experimental and currently supports local session inventory and provider review links. Safari does not support extension-driven local cleanup in this build.
-

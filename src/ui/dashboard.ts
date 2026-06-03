@@ -13,6 +13,7 @@ type RuntimeRequest =
 
 type ExtensionCapabilities = {
   localCleanup: boolean;
+  allSitesAccess?: boolean;
 };
 
 type RuntimeResponse =
@@ -126,6 +127,13 @@ async function scan(): Promise<void> {
   delete state.error;
   render();
 
+  await refreshCapabilities();
+  if (state.capabilities.allSitesAccess === false) {
+    state.loading = false;
+    render();
+    return;
+  }
+
   const response = await sendMessage(scanRequest());
 
   state.loading = false;
@@ -137,6 +145,13 @@ async function scan(): Promise<void> {
   }
 
   render();
+}
+
+async function refreshCapabilities(): Promise<void> {
+  const response = await sendMessage({ type: 'getCapabilities' });
+  if (response.ok && response.capabilities) {
+    state.capabilities = response.capabilities;
+  }
 }
 
 async function clearSite(site: SiteInventory): Promise<void> {
@@ -278,6 +293,7 @@ function render(): void {
         Clear high-severity sessions (${bulkCleanupCount})
       </button>
     </section>
+    ${state.capabilities.allSitesAccess === false ? `<section class="error-banner" role="alert">${escapeHtml(websiteAccessMessage())}</section>` : ''}
     ${state.error ? `<section class="error-banner" role="alert">${escapeHtml(state.error)}</section>` : ''}
     <section class="summary-grid" aria-label="Scan summary">
       ${summaryTile('Sites', pluralize(inventory.length, 'site'))}
@@ -422,6 +438,10 @@ function emptyState(totalCount: number): string {
   return totalCount === 0
     ? '<div class="empty-state"><h2>No scan yet</h2><p>Run a browser profile scan to inventory likely local exposure indicators.</p></div>'
     : '<div class="empty-state"><h2>No sites match</h2><p>Adjust severity or domain filters.</p></div>';
+}
+
+function websiteAccessMessage(): string {
+  return 'Website access is not granted for all websites. In Safari, click the extension toolbar item and choose Always Allow on Every Website, or open Safari Settings > Extensions > Browser Session Compromise Dashboard > Websites and set access to Allow. Without that, cookie inventory can be empty while tabs still appear.';
 }
 
 function formatDate(value: string): string {

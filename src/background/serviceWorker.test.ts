@@ -121,6 +121,34 @@ describe('serviceWorker', () => {
     });
   });
 
+  it('reports missing all-site access when broad host permissions are not granted', async () => {
+    const chromeMock = installChromeMock();
+    const contains = vi.fn((_permissions: chrome.permissions.Permissions, callback: (granted: boolean) => void) => {
+      callback(false);
+    });
+    (chromeMock as typeof chromeMock & {
+      permissions: { contains: typeof contains };
+    }).permissions = { contains };
+
+    const router = createServiceWorkerRouter({
+      chromeApi: chromeMock,
+      collectCookies: vi.fn(),
+      collectTabs: vi.fn(),
+      buildInventory: vi.fn()
+    });
+
+    await expect(router({ type: 'getCapabilities' })).resolves.toMatchObject({
+      ok: true,
+      capabilities: {
+        localCleanup: true,
+        allSitesAccess: false
+      }
+    });
+    expect(contains).toHaveBeenCalledWith({
+      origins: ['http://*/*', 'https://*/*']
+    }, expect.any(Function));
+  });
+
   it('returns structured errors for failed scans', async () => {
     const router = createServiceWorkerRouter({
       chromeApi: installChromeMock(),

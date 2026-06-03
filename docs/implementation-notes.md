@@ -269,3 +269,16 @@
   - Launching the wrapper app registered `com.skynet01.browser-session-dashboard.Extension(1.0)` with macOS.
 - Added `docs/safari-compatibility-audit.md`.
 - Current Safari claim: inventory/provider review flows are feasible and the wrapper builds; extension-driven local cleanup is not supported in Safari without native cleanup work in the containing app.
+
+## Safari Website Access Diagnostics
+
+- Investigated Safari scan behavior where open tabs appeared but expected cookies, such as Google cookies, did not.
+- Root cause:
+  - Safari treats declared host permissions as website access that must be granted by the user.
+  - The `tabs` permission can still expose open-tab context, so a scan can look partially populated while `chrome.cookies.getAll()` returns no cookies for ungranted hosts.
+  - Apple documents that users grant website access from the extension toolbar or Extensions settings, including an all-websites option.
+- Added service-worker capability detection for broad `http://*/*` and `https://*/*` host access via `chrome.permissions.contains`.
+- Dashboard now blocks scans and shows an explicit website-access message when all-site access is missing, instead of showing misleading tab-only results.
+- Verification during this slice:
+  - Red tests first failed because capabilities did not report `allSitesAccess` and the dashboard still sent a scan.
+  - Focused tests passed: `src/background/serviceWorker.test.ts` and `src/ui/dashboard.test.ts`.

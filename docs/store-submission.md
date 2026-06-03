@@ -113,6 +113,8 @@ Safari distribution requires Apple Developer Program/App Store Connect. The exte
 
 Safari support is experimental in this codebase. The scan dashboard and provider review flows can be packaged for Safari, but Safari does not support the Chromium `browsingData` API used for extension-driven local cleanup. The Safari UI disables cleanup controls through runtime capability detection.
 
+Safari also requires a separate website-access grant for host permissions. After enabling the extension, grant access for all websites from the extension toolbar item or Safari Settings > Extensions before testing cookie inventory. Without that grant, Safari may show open tabs while returning no cookies.
+
 Build Safari resources before conversion:
 
 ```bash
