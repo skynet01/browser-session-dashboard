@@ -242,3 +242,13 @@
   - README now explicitly states support for Chrome, Brave, Microsoft Edge, and compatible Chromium Manifest V3 browsers.
   - Replaced the generated extension icon with the user-provided `threat-detection.png`, resized into the required manifest PNG sizes.
   - Removed the earlier generated SVG icon source from tracked public assets.
+
+## v1.0.0 Release Preparation
+
+- Bumped `package.json`, `package-lock.json`, and `public/manifest.json` to version `1.0.0`.
+- Added `PRIVACY.md` for store privacy-policy URL use.
+- Added `docs/store-submission.md` with listing copy, permission justifications, reviewer test notes, and store-specific guidance for Chrome Web Store, Brave, Microsoft Edge Add-ons, and Safari App Store.
+- Store guidance checked on 2026-06-03:
+  - Chrome and Edge require interactive developer dashboard submissions.
+  - Brave uses Chrome Web Store-compatible extensions rather than a separate Brave extension store submission.
+  - Safari requires Apple Developer/App Store Connect plus Safari Web Extension conversion, signing, and compatibility testing before submission.

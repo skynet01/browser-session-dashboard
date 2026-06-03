@@ -93,7 +93,7 @@ The extension is designed around local-only handling:
 
 The extension requests broad host permissions because Chrome only exposes cookies for hosts the extension can access. This is sensitive, but without broad host access the scan would produce a misleading partial inventory.
 
-See [docs/security-model.md](docs/security-model.md) and [docs/chrome-web-store-submission.md](docs/chrome-web-store-submission.md) for the full security and store-submission notes.
+See [PRIVACY.md](PRIVACY.md), [docs/security-model.md](docs/security-model.md), and [docs/store-submission.md](docs/store-submission.md) for the full privacy, security, and store-submission notes.
 
 ## Development
 
