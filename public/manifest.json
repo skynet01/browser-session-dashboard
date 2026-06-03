@@ -3,8 +3,20 @@
   "name": "Browser Session Compromise Dashboard",
   "description": "Inventory local browser sessions that may be exposed after suspected cookie theft.",
   "version": "0.1.0",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "action": {
-    "default_title": "Review browser sessions"
+    "default_title": "Review browser sessions",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
   "background": {
     "service_worker": "assets/serviceWorker.js",

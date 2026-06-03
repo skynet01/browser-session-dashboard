@@ -226,3 +226,15 @@
   - `npm run typecheck`, `npm test`, `npm audit --omit=dev`, and `npm run build` passed.
   - Chrome headless smoke passed against built `dist/dashboard.html` served from localhost: bulk cleanup removed GitHub/PayPal target rows, left the high-severity non-session row in place, rendered the response log, and had no horizontal overflow.
   - Static remote-code pattern check found no `eval`, `new Function`, remote script tags, or remote dynamic imports in `src`, `public`, or `dist`.
+
+## Public Repository Polish
+
+- Merged the public GitHub repo's existing GPL-3.0 `LICENSE` into this branch before publishing.
+- Added a public-facing `README.md` with:
+  - Product overview, screenshot, install steps, usage flow, risk-scoring notes, privacy/security model, development commands, project structure, and license link.
+  - Clear language that the extension is a local exposure inventory, not proof of stolen sessions and not provider-side revocation.
+- Generated a dashboard screenshot at `docs/assets/dashboard-screenshot.png` from built `dist/dashboard.html` using mocked redacted scan data.
+- Added a simple extension icon:
+  - Source SVG: `public/icons/session-dashboard.svg`.
+  - Manifest PNG assets: `public/icons/icon-16.png`, `icon-32.png`, `icon-48.png`, and `icon-128.png`.
+  - `public/manifest.json` now references the icons for both extension metadata and the toolbar action.
