@@ -32,6 +32,8 @@ Local cleanup logs out this browser profile, but provider-side session revocatio
 
 This extension is designed for Chromium-based browsers and works on Google Chrome, Brave, and Microsoft Edge. It should also work on other Chromium browsers that support Manifest V3, the `chrome.cookies`, `chrome.browsingData`, `chrome.tabs`, and `chrome.storage` APIs, and unpacked extension loading.
 
+Safari support is experimental. The Safari wrapper builds locally and can support session inventory/provider review flows, but Safari does not expose the Chromium `browsingData` cleanup API used for extension-driven local cleanup. See [docs/safari-compatibility-audit.md](docs/safari-compatibility-audit.md).
+
 ## Install From Source
 
 Requirements:

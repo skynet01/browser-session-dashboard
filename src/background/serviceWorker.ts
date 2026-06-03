@@ -27,7 +27,7 @@ type ChromeApi = {
     create(properties: chrome.tabs.CreateProperties, callback?: (tab: chrome.tabs.Tab) => void): void;
     query(queryInfo: chrome.tabs.QueryInfo, callback: (tabs: chrome.tabs.Tab[]) => void): void;
   };
-  browsingData: {
+  browsingData?: {
     remove(
       options: chrome.browsingData.RemovalOptions,
       dataToRemove: chrome.browsingData.DataTypeSet,
@@ -44,12 +44,17 @@ type ChromeApi = {
 
 type RuntimeRequest =
   | { type: 'scan'; suspectedCompromiseDate?: string }
+  | { type: 'getCapabilities' }
   | { type: 'getLatestSnapshot' }
   | { type: 'markReviewed'; siteKey: string }
   | ({ type: 'clearLocalSiteData' } & LocalCleanupRequest);
 
+export type ExtensionCapabilities = {
+  localCleanup: boolean;
+};
+
 type RuntimeResponse =
-  | { ok: true; snapshot?: ScanSnapshot; result?: LocalCleanupResult }
+  | { ok: true; snapshot?: ScanSnapshot; result?: LocalCleanupResult; capabilities?: ExtensionCapabilities }
   | { ok: false; error: string };
 
 type RouterDependencies = {
@@ -107,6 +112,8 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
         }
         case 'getLatestSnapshot':
           return responseWithSnapshot(await getLatestSnapshot(chromeApi));
+        case 'getCapabilities':
+          return { ok: true, capabilities: browserCapabilities(chromeApi) };
         case 'markReviewed':
           return responseWithSnapshot(await markSiteReviewed(request.siteKey, chromeApi));
         case 'clearLocalSiteData':
@@ -144,8 +151,15 @@ function isRuntimeRequest(message: unknown): message is RuntimeRequest {
   }
 
   return type === 'getLatestSnapshot'
+    || type === 'getCapabilities'
     || type === 'markReviewed'
     || type === 'clearLocalSiteData';
+}
+
+function browserCapabilities(chromeApi: ChromeApi): ExtensionCapabilities {
+  return {
+    localCleanup: typeof chromeApi.browsingData?.remove === 'function'
+  };
 }
 
 if (typeof globalThis.chrome !== 'undefined') {

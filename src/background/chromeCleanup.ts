@@ -1,6 +1,6 @@
 type ChromeApi = {
   runtime: { readonly lastError: { message?: string | undefined } | undefined };
-  browsingData: {
+  browsingData?: {
     remove(
       options: chrome.browsingData.RemovalOptions,
       dataToRemove: chrome.browsingData.DataTypeSet,
@@ -45,12 +45,17 @@ export async function clearLocalSiteData(
   request: LocalCleanupRequest,
   chromeApi: ChromeApi = chrome
 ): Promise<LocalCleanupResult> {
+  if (!chromeApi.browsingData?.remove) {
+    throw new Error('Local cleanup is not supported by this browser. Review provider sessions manually.');
+  }
+
+  const removeBrowsingData = chromeApi.browsingData.remove.bind(chromeApi.browsingData);
   const requestedAt = new Date().toISOString();
   const requestedDomains = [...new Set(request.domains ?? [])];
   const origins = normalizeCleanupOrigins(request);
 
   await new Promise<void>((resolve, reject) => {
-    chromeApi.browsingData.remove(
+    removeBrowsingData(
       {
         origins,
         originTypes: { unprotectedWeb: true, protectedWeb: true }

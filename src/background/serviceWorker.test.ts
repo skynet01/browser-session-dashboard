@@ -63,7 +63,7 @@ describe('serviceWorker', () => {
     expect(JSON.stringify(chromeMock.__storage)).not.toContain('"value"');
   });
 
-  it('routes latest snapshot, cleanup, and mark-reviewed messages', async () => {
+  it('routes latest snapshot, capabilities, cleanup, and mark-reviewed messages', async () => {
     const chromeMock = installChromeMock();
     const router = createServiceWorkerRouter({
       chromeApi: chromeMock,
@@ -77,6 +77,10 @@ describe('serviceWorker', () => {
     expect(scan.ok).toBe(true);
 
     expect(await router({ type: 'getLatestSnapshot' })).toMatchObject({ ok: true });
+    expect(await router({ type: 'getCapabilities' })).toMatchObject({
+      ok: true,
+      capabilities: { localCleanup: true }
+    });
     expect(await router({ type: 'markReviewed', siteKey: 'github.com' })).toMatchObject({
       ok: true,
       snapshot: { reviewedSiteKeys: ['github.com'] }
@@ -89,6 +93,31 @@ describe('serviceWorker', () => {
     })).toMatchObject({
       ok: true,
       result: { status: 'completed', siteKey: 'github.com' }
+    });
+  });
+
+  it('reports cleanup as unsupported when browsingData is unavailable', async () => {
+    const chromeMock = installChromeMock();
+    delete (chromeMock as Partial<typeof chromeMock>).browsingData;
+    const router = createServiceWorkerRouter({
+      chromeApi: chromeMock,
+      collectCookies: vi.fn(),
+      collectTabs: vi.fn(),
+      buildInventory: vi.fn()
+    });
+
+    await expect(router({ type: 'getCapabilities' })).resolves.toMatchObject({
+      ok: true,
+      capabilities: { localCleanup: false }
+    });
+    await expect(router({
+      type: 'clearLocalSiteData',
+      siteKey: 'github.com',
+      domains: ['.github.com'],
+      origins: ['https://github.com']
+    })).resolves.toMatchObject({
+      ok: false,
+      error: 'Local cleanup is not supported by this browser. Review provider sessions manually.'
     });
   });
 

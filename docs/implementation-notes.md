@@ -252,3 +252,20 @@
   - Chrome and Edge require interactive developer dashboard submissions.
   - Brave uses Chrome Web Store-compatible extensions rather than a separate Brave extension store submission.
   - Safari requires Apple Developer/App Store Connect plus Safari Web Extension conversion, signing, and compatibility testing before submission.
+
+## Safari Compatibility Audit
+
+- Added runtime capability detection for local cleanup support:
+  - Service worker now handles `getCapabilities`.
+  - Dashboard disables single-site cleanup and bulk cleanup when `browsingData` is unavailable.
+  - Cleanup route returns a specific unsupported-browser error if called without `browsingData`.
+- Added `npm run build:safari-dist` through `scripts/build-safari-dist.mjs`.
+  - The script copies built `dist/` resources to `store-packages/safari-extension`.
+  - It removes Safari-unsupported manifest entries: `browsingData`, `incognito`, and `background.type`.
+- Generated a Safari Web Extension Xcode project from the patched Safari dist.
+  - Initial raw conversion had unsupported manifest warnings and Xcode bundle-ID validation failure.
+  - Patched conversion with app name `browser-session-dashboard` and bundle ID `com.skynet01.browser-session-dashboard` generated cleanly.
+  - `xcodebuild` for the generated macOS wrapper succeeded.
+  - Launching the wrapper app registered `com.skynet01.browser-session-dashboard.Extension(1.0)` with macOS.
+- Added `docs/safari-compatibility-audit.md`.
+- Current Safari claim: inventory/provider review flows are feasible and the wrapper builds; extension-driven local cleanup is not supported in Safari without native cleanup work in the containing app.

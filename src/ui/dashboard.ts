@@ -6,12 +6,17 @@ import { escapeHtml, pluralize, riskLabel, sentenceCase, siteMatchesQuery } from
 
 type RuntimeRequest =
   | { type: 'scan'; suspectedCompromiseDate?: string }
+  | { type: 'getCapabilities' }
   | { type: 'getLatestSnapshot' }
   | { type: 'markReviewed'; siteKey: string }
   | { type: 'clearLocalSiteData'; siteKey: string; domains: string[]; origins: string[] };
 
+type ExtensionCapabilities = {
+  localCleanup: boolean;
+};
+
 type RuntimeResponse =
-  | { ok: true; snapshot?: ScanSnapshot; result?: LocalCleanupResult }
+  | { ok: true; snapshot?: ScanSnapshot; result?: LocalCleanupResult; capabilities?: ExtensionCapabilities }
   | { ok: false; error: string };
 
 type DashboardState = {
@@ -21,6 +26,7 @@ type DashboardState = {
   suspectedCompromiseDate: string;
   loading: boolean;
   error?: string;
+  capabilities: ExtensionCapabilities;
   actionLog: string[];
 };
 
@@ -29,6 +35,7 @@ const state: DashboardState = {
   query: '',
   suspectedCompromiseDate: '',
   loading: false,
+  capabilities: { localCleanup: true },
   actionLog: []
 };
 
@@ -45,7 +52,14 @@ if (app) {
 }
 
 async function loadLatestSnapshot(): Promise<void> {
-  const response = await sendMessage({ type: 'getLatestSnapshot' });
+  const [capabilitiesResponse, response] = await Promise.all([
+    sendMessage({ type: 'getCapabilities' }),
+    sendMessage({ type: 'getLatestSnapshot' })
+  ]);
+
+  if (capabilitiesResponse.ok && capabilitiesResponse.capabilities) {
+    state.capabilities = capabilitiesResponse.capabilities;
+  }
 
   if (response.ok && response.snapshot) {
     state.snapshot = response.snapshot;
@@ -126,6 +140,12 @@ async function scan(): Promise<void> {
 }
 
 async function clearSite(site: SiteInventory): Promise<void> {
+  if (!state.capabilities.localCleanup) {
+    state.error = 'Local cleanup is not supported by this browser. Open the provider review link and clear website data from browser settings if needed.';
+    render();
+    return;
+  }
+
   const confirmed = confirm(
     `Clear local cookies and site data for ${site.siteKey}? Local cleanup logs out this browser, but it does not revoke stolen cookies.`
   );
@@ -147,6 +167,12 @@ async function clearSite(site: SiteInventory): Promise<void> {
 }
 
 async function clearHighSeveritySessions(): Promise<void> {
+  if (!state.capabilities.localCleanup) {
+    state.error = 'Bulk local cleanup is not supported by this browser. Open provider review links and clear website data from browser settings if needed.';
+    render();
+    return;
+  }
+
   const targets = highSeveritySessionSites();
   if (targets.length === 0) return;
 
@@ -244,9 +270,11 @@ function render(): void {
     <section class="warning-strip warning-strip--actions" role="note">
       <div>
         <strong>Local cleanup does not revoke stolen cookies.</strong>
-        Clearing local browser data logs out this browser. Revoke sessions from provider security pages where possible.
+        ${state.capabilities.localCleanup
+          ? 'Clearing local browser data logs out this browser. Revoke sessions from provider security pages where possible.'
+          : 'This browser does not expose extension-driven local cleanup. Revoke sessions from provider security pages and clear website data from browser settings.'}
       </div>
-      <button type="button" class="secondary" data-action="clear-high-risk" ${bulkCleanupCount === 0 ? 'disabled' : ''}>
+      <button type="button" class="secondary" data-action="clear-high-risk" ${bulkCleanupCount === 0 || !state.capabilities.localCleanup ? 'disabled' : ''}>
         Clear high-severity sessions (${bulkCleanupCount})
       </button>
     </section>
@@ -320,7 +348,7 @@ function renderSiteRow(site: SiteInventory): string {
       </div>
       <div class="row-actions row-actions--right">
         <a class="button-link" href="${escapeHtml(primaryAction.url)}" target="_blank" rel="noreferrer" data-action="${site.providerAction ? 'provider' : 'login'}" data-site="${escapeHtml(site.siteKey)}">${escapeHtml(primaryAction.label)}</a>
-        <button type="button" class="secondary" data-action="clear" data-site="${escapeHtml(site.siteKey)}">Clear local data</button>
+        <button type="button" class="secondary" data-action="clear" data-site="${escapeHtml(site.siteKey)}" ${state.capabilities.localCleanup ? '' : 'disabled'}>${state.capabilities.localCleanup ? 'Clear local data' : 'Cleanup unavailable'}</button>
         <button type="button" class="ghost" data-action="review" data-site="${escapeHtml(site.siteKey)}">Mark done</button>
       </div>
     </article>

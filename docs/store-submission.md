@@ -111,14 +111,20 @@ Official docs: https://developer.apple.com/safari/extensions/
 
 Safari distribution requires Apple Developer Program/App Store Connect. The extension must be converted to a Safari Web Extension package or app wrapper, tested in Safari, signed, and submitted through App Store Connect.
 
-This Chromium extension should not be submitted to Safari without a Safari compatibility pass because it uses Chrome extension APIs such as `chrome.cookies`, `chrome.browsingData`, `chrome.tabs`, `chrome.storage`, and a Manifest V3 service worker.
+Safari support is experimental in this codebase. The scan dashboard and provider review flows can be packaged for Safari, but Safari does not support the Chromium `browsingData` API used for extension-driven local cleanup. The Safari UI disables cleanup controls through runtime capability detection.
 
-Initial conversion command used locally:
+Build Safari resources before conversion:
 
 ```bash
-xcrun safari-web-extension-converter dist \
+npm run build:safari-dist
+```
+
+Conversion command that builds without unsupported-key warnings:
+
+```bash
+xcrun safari-web-extension-converter store-packages/safari-extension \
   --project-location store-packages/safari \
-  --app-name "Browser Session Dashboard" \
+  --app-name browser-session-dashboard \
   --bundle-identifier com.skynet01.browser-session-dashboard \
   --macos-only \
   --copy-resources \
@@ -127,4 +133,19 @@ xcrun safari-web-extension-converter dist \
   --force
 ```
 
-Converter warning for `v1.0.0`: Safari reported unsupported manifest keys `browsingData`, service-worker `type`, and `incognito`. Treat Safari as blocked until those gaps are designed, implemented, and tested.
+Xcode build audit:
+
+```bash
+xcodebuild \
+  -project 'store-packages/safari/browser-session-dashboard/browser-session-dashboard.xcodeproj' \
+  -scheme 'browser-session-dashboard' \
+  -configuration Debug \
+  -destination 'platform=macOS' \
+  build
+```
+
+Result: `BUILD SUCCEEDED`.
+
+Launching the locally built wrapper app registered `com.skynet01.browser-session-dashboard.Extension(1.0)` with macOS. Enabling it in Safari Settings remains an interactive user permission step.
+
+See `docs/safari-compatibility-audit.md` before attempting App Store submission.

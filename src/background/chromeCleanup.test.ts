@@ -52,4 +52,12 @@ describe('clearLocalSiteData', () => {
     await expect(clearLocalSiteData({ siteKey: 'example.com', origins: ['https://example.com'] }, chromeMock))
       .rejects.toThrow('browsingData blocked by policy');
   });
+
+  it('reports unsupported cleanup when the browser does not expose browsingData', async () => {
+    const chromeMock = installChromeMock();
+    delete (chromeMock as Partial<typeof chromeMock>).browsingData;
+
+    await expect(clearLocalSiteData({ siteKey: 'example.com', origins: ['https://example.com'] }, chromeMock))
+      .rejects.toThrow('Local cleanup is not supported by this browser');
+  });
 });

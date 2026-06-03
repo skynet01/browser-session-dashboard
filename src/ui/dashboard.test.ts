@@ -249,10 +249,28 @@ describe('dashboard', () => {
     expect(document.querySelector<HTMLElement>('[data-site-row="github.com"]')?.classList.contains('is-reviewed')).toBe(true);
   });
 
+  test('disables local cleanup controls when the browser does not support cleanup', async () => {
+    const sendMessage = installRuntimeMock([{ ok: true, snapshot }], { localCleanup: false });
+
+    await import('./dashboard');
+    await waitForAsyncUi();
+
+    const text = normalizedText();
+    expect(sendMessage).toHaveBeenCalledWith({ type: 'getCapabilities' });
+    expect(text).toContain('This browser does not expose extension-driven local cleanup');
+    expect(text).toContain('Cleanup unavailable');
+    expect(document.querySelector<HTMLButtonElement>('[data-action="clear-high-risk"]')?.disabled).toBe(true);
+    expect(document.querySelector<HTMLButtonElement>('[data-action="clear"][data-site="github.com"]')?.disabled).toBe(true);
+  });
+
 });
 
-function installRuntimeMock(responses: unknown[]) {
-  const sendMessage = vi.fn(async () => {
+function installRuntimeMock(responses: unknown[], capabilities = { localCleanup: true }) {
+  const sendMessage = vi.fn(async (message: { type?: string }) => {
+    if (message.type === 'getCapabilities') {
+      return { ok: true, capabilities };
+    }
+
     const response = responses.shift();
     if (response === undefined) throw new Error('Unexpected runtime message');
 
