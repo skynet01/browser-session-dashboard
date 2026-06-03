@@ -1,4 +1,4 @@
-import { getProviderAction, isHighValueProvider } from './providerDirectory';
+import { getProviderAction, getProviderCategory, isHighValueProvider } from './providerDirectory';
 import { scoreSiteRisk } from './riskScoring';
 import { classifyCookie } from './sessionClassifier';
 import { getSiteKey } from './siteKey';
@@ -68,6 +68,7 @@ function buildSiteInventory(siteKey: string, group: SiteGroup): SiteInventory {
     .filter(({ classification }) => classification.likelySession)
     .map(({ cookie }) => cookie);
   const providerAction = getProviderAction(siteKey);
+  const providerCategory = getProviderCategory(siteKey);
   const riskResult = scoreSiteRisk({
     siteKey,
     cookieCount: group.cookies.length,
@@ -95,6 +96,7 @@ function buildSiteInventory(siteKey: string, group: SiteGroup): SiteInventory {
 
   if (likelySessionCookieNames.length > 0) inventory.likelySessionCookieNames = likelySessionCookieNames;
   if (providerAction !== undefined) inventory.providerAction = providerAction;
+  if (providerCategory !== undefined) inventory.providerCategory = providerCategory;
 
   return inventory;
 }

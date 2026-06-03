@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { OpenTabSummary, RedactedCookie } from './types';
 import { buildInventory } from './inventoryBuilder';
-import { getKnownProviderSiteKeys, getProviderAction } from './providerDirectory';
+import { getKnownProviderSiteKeys, getProviderAction, getProviderCategory } from './providerDirectory';
 
 const cookies: RedactedCookie[] = [
   {
@@ -61,7 +61,8 @@ describe('buildInventory', () => {
       cookieCount: 2,
       likelySessionCookieCount: 1,
       openTabCount: 1,
-      risk: 'critical'
+      risk: 'critical',
+      providerCategory: 'Developer'
     });
     expect(github?.providerAction?.url).toContain('github.com');
 
@@ -139,7 +140,17 @@ describe('buildInventory', () => {
       'linkedin.com',
       'dropbox.com',
       'slack.com',
-      'discord.com'
+      'discord.com',
+      'telegram.org',
+      'whatsapp.com',
+      'steamcommunity.com',
+      'steampowered.com',
+      'twitch.tv',
+      'spotify.com',
+      'notion.so',
+      'figma.com',
+      'atlassian.net',
+      'zoom.us'
     ]));
 
     expect(getProviderAction('google.com')?.url).toContain('myaccount.google.com');
@@ -149,5 +160,13 @@ describe('buildInventory', () => {
     expect(getProviderAction('paypal.com')?.url).toContain('paypal.com/myaccount/security');
     expect(getProviderAction('ebay.com')?.url).toContain('signin.ebay.com');
     expect(getProviderAction('netflix.com')?.url).toContain('ManageDevices');
+    expect(getProviderAction('telegram.org')?.url).toContain('web.telegram.org');
+    expect(getProviderAction('whatsapp.com')?.url).toContain('web.whatsapp.com');
+    expect(getProviderAction('steamcommunity.com')?.url).toContain('steamcommunity.com');
+    expect(getProviderAction('steampowered.com')?.url).toContain('steamcommunity.com');
+    expect(getProviderCategory('discord.com')).toBe('Messaging');
+    expect(getProviderCategory('telegram.org')).toBe('Messaging');
+    expect(getProviderCategory('whatsapp.com')).toBe('Messaging');
+    expect(getProviderCategory('steamcommunity.com')).toBe('Gaming');
   });
 });

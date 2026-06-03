@@ -15,6 +15,7 @@ const snapshot: ScanSnapshot = {
       likelySessionCookieNames: ['user_session'],
       openTabCount: 1,
       risk: 'critical',
+      providerCategory: 'Developer',
       reasons: ['known high-value provider', 'likely session/auth cookies present'],
       providerAction: {
         label: 'Review GitHub session page',
@@ -56,6 +57,7 @@ describe('dashboard', () => {
     expect(text).toContain('2 sites');
     expect(text).toContain('github.com');
     expect(text).toContain('critical');
+    expect(text).toContain('Developer');
     expect(text).toContain('Known high-value provider');
     expect(text).toContain('Review GitHub session page');
     expect(text).toContain('Open example.com login');

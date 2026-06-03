@@ -269,6 +269,7 @@ function renderSiteRow(site: SiteInventory): string {
         <div class="site-title">
           <h2>${escapeHtml(site.siteKey)}</h2>
           <span class="risk-pill">${riskLabel(site.risk)}</span>
+          ${site.providerCategory ? `<span class="category-pill">${escapeHtml(site.providerCategory)}</span>` : ''}
           ${reviewed ? '<span class="reviewed-pill">Reviewed</span>' : ''}
         </div>
         <p class="domains">${escapeHtml(site.domains.join(', ') || site.siteKey)}</p>

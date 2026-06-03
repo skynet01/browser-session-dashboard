@@ -190,3 +190,15 @@
   - `npm test` passed: 11 files, 44 tests.
   - `npm run build` passed.
   - Chrome headless smoke check passed against built `dist/dashboard.html`: saved scan loaded, fallback login rendered, `Mark done` greened the full row, `Clear local data` removed the row, and date input/scan button bottoms were exactly aligned. Screenshot artifact: `output/review-clear-dashboard-smoke.png`.
+
+## Provider Categories and App Session Signals
+
+- Expanded the known provider directory to include more browser app session targets: Telegram Web, WhatsApp Web, Steam, Twitch, Spotify, Notion, Figma, Atlassian, and Zoom.
+- Added provider categories to scan inventory so rows can distinguish `Messaging`, `Gaming`, `Productivity`, `Developer`, `Finance`, `Social`, `Cloud`, and related account types.
+- Dashboard rows now render a compact category pill next to the severity pill when a scanned site has curated provider metadata.
+- The feature remains browser-profile scoped. It detects web-app cookies and open tabs; it does not inspect native desktop app auth stores for Discord, Telegram, Steam, or similar apps.
+- Verification during this slice:
+  - Red tests first failed for missing provider categories, missing expanded provider keys, and missing category rendering.
+  - Focused tests then passed: `src/core/inventoryBuilder.test.ts` and `src/ui/dashboard.test.ts`.
+  - `npm run typecheck`, `npm test`, and `npm run build` passed.
+  - Chrome headless smoke check passed against built `dist/dashboard.html`: Discord/WhatsApp/Steam/GitHub category pills rendered, expanded provider rows appeared, and no horizontal overflow was detected at the smoke viewport. Screenshot artifact: `output/provider-category-dashboard-smoke.png`.

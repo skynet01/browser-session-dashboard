@@ -360,6 +360,7 @@ label span {
 }
 
 .risk-pill,
+.category-pill,
 .reviewed-pill {
   border-radius: 999px;
   font-size: 0.68rem;
@@ -371,6 +372,11 @@ label span {
 .risk-pill {
   background: oklch(0.24 0.012 95);
   color: var(--surface);
+}
+
+.category-pill {
+  background: oklch(0.94 0.022 236);
+  color: oklch(0.34 0.054 246);
 }
 
 .reviewed-pill {

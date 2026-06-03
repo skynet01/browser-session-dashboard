@@ -30,6 +30,19 @@ export type ProviderAction = {
   instructions: string;
 };
 
+export type ProviderCategory =
+  | 'Cloud'
+  | 'Commerce'
+  | 'Developer'
+  | 'Email'
+  | 'Entertainment'
+  | 'Finance'
+  | 'Gaming'
+  | 'Identity'
+  | 'Messaging'
+  | 'Productivity'
+  | 'Social';
+
 export type SiteRisk = 'critical' | 'high' | 'medium' | 'low';
 
 export type SiteInventory = {
@@ -41,5 +54,6 @@ export type SiteInventory = {
   openTabCount: number;
   risk: SiteRisk;
   reasons: string[];
+  providerCategory?: ProviderCategory;
   providerAction?: ProviderAction;
 };
