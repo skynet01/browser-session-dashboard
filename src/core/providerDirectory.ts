@@ -394,3 +394,10 @@ export function getProviderCategory(siteKey: string): ProviderCategory | undefin
 export function getKnownProviderSiteKeys(): string[] {
   return Object.keys(PROVIDERS).sort();
 }
+
+export function getKnownProviderCookieUrls(): string[] {
+  return [...new Set(Object.entries(PROVIDERS).flatMap(([siteKey, provider]) => [
+    `https://${siteKey}/`,
+    provider.url
+  ]))].sort();
+}

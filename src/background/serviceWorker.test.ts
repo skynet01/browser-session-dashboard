@@ -46,8 +46,11 @@ describe('serviceWorker', () => {
       suspectedCompromiseDate: '2026-05-20'
     });
 
-    expect(collectCookies).toHaveBeenCalledWith(chromeMock);
     expect(collectTabs).toHaveBeenCalledWith(chromeMock);
+    expect(collectCookies).toHaveBeenCalledWith(chromeMock, expect.arrayContaining([
+      'https://google.com/',
+      'https://myaccount.google.com/device-activity'
+    ]));
     expect(buildInventory).toHaveBeenCalledWith(
       [{ name: 'sessionid', domain: '.example.com' }],
       [{ url: 'https://example.com', host: 'example.com', origin: 'https://example.com' }],

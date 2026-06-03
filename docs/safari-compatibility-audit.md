@@ -102,7 +102,8 @@ This confirms macOS recognizes the converted Safari Web Extension. Enabling it i
 
 - Run manual Safari QA after enabling the extension in Safari Settings.
 - Grant website access for all websites before scan QA. In Safari, enabling the extension is not enough; host permissions are separately granted from the extension toolbar item or Safari Settings > Extensions.
-- Verify `chrome.cookies.getAll`, `chrome.tabs.query`, and `chrome.storage.local` behavior in Safari with real profile data after all-site website access is granted.
+- Verify `chrome.cookies.getAll`, URL-scoped `chrome.cookies.getAll({ url })`, `chrome.tabs.query`, and `chrome.storage.local` behavior in Safari with real profile data after all-site website access is granted.
+- Current Safari cookie fallback is provider-domain scoped if broad enumeration is empty. Chrome, Brave, and Edge continue to use broad actual-cookie inventory first.
 - Verify provider links open correctly.
 - Verify cleanup controls are disabled and the unsupported-cleanup copy appears.
 - Decide whether to implement native Safari website-data cleanup through the containing app. That would require new native code and a separate privacy/security review.

@@ -1,4 +1,5 @@
 import { buildInventory as defaultBuildInventory, type InventoryBuildOptions } from '../core/inventoryBuilder';
+import { getKnownProviderCookieUrls } from '../core/providerDirectory';
 import type { OpenTabSummary, RedactedCookie, SiteInventory } from '../core/types';
 import { getLatestSnapshot, markSiteReviewed, saveScanSnapshot, type ScanSnapshot } from '../storage/snapshotStore';
 import { clearLocalSiteData, type LocalCleanupRequest, type LocalCleanupResult } from './chromeCleanup';
@@ -63,7 +64,7 @@ type RuntimeResponse =
 
 type RouterDependencies = {
   chromeApi: ChromeApi;
-  collectCookies?: (chromeApi: ChromeApi) => Promise<RedactedCookie[] | undefined>;
+  collectCookies?: (chromeApi: ChromeApi, fallbackUrls?: string[]) => Promise<RedactedCookie[] | undefined>;
   collectTabs?: (chromeApi: ChromeApi) => Promise<OpenTabSummary[] | undefined>;
   buildInventory?: (
     cookies: RedactedCookie[],
@@ -102,7 +103,7 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
 
       switch (request.type) {
         case 'scan': {
-          const cookies = (await collectCookies(chromeApi)) ?? [];
+          const cookies = (await collectCookies(chromeApi, getKnownProviderCookieUrls())) ?? [];
           const tabs = (await collectTabs(chromeApi)) ?? [];
           const inventory = (await buildInventoryFromInputs(cookies, tabs, {
             ...(request.suspectedCompromiseDate ? { suspectedCompromiseDate: request.suspectedCompromiseDate } : {})

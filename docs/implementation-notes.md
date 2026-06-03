@@ -282,3 +282,9 @@
 - Verification during this slice:
   - Red tests first failed because capabilities did not report `allSitesAccess` and the dashboard still sent a scan.
   - Focused tests passed: `src/background/serviceWorker.test.ts` and `src/ui/dashboard.test.ts`.
+- Follow-up Safari cookie collection fallback:
+  - Chrome/Edge/Brave still use broad `chrome.cookies.getAll({})` as the primary actual-cookie inventory path.
+  - If broad cookie enumeration returns empty, the cookie collector now performs URL-scoped cookie queries against the curated provider directory. This is intended for Safari-style behavior where provider cookies can be returned for specific URLs even when broad enumeration is empty.
+  - Open tabs remain scan context only; they are not used as the source of the cookie inventory fallback.
+  - This fallback still reads actual browser cookies through the cookies API and redacts values immediately. It may be partial in Safari if Safari does not expose broad all-cookie enumeration and a domain is not in the curated provider list.
+  - Verification passed: `src/background/chromeCookies.test.ts`, `src/background/serviceWorker.test.ts`, full `npm run typecheck`, full `npm test`, `npm run build:safari-dist`, and Safari Xcode wrapper `BUILD SUCCEEDED`.
