@@ -238,3 +238,7 @@
   - Source SVG: `public/icons/session-dashboard.svg`.
   - Manifest PNG assets: `public/icons/icon-16.png`, `icon-32.png`, `icon-48.png`, and `icon-128.png`.
   - `public/manifest.json` now references the icons for both extension metadata and the toolbar action.
+- Follow-up public README/icon polish:
+  - README now explicitly states support for Chrome, Brave, Microsoft Edge, and compatible Chromium Manifest V3 browsers.
+  - Replaced the generated extension icon with the user-provided `threat-detection.png`, resized into the required manifest PNG sizes.
+  - Removed the earlier generated SVG icon source from tracked public assets.

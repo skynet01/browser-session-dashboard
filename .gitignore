@@ -3,4 +3,6 @@ dist/
 coverage/
 output/
 .DS_Store
+._*
 *.log
+/threat-detection.png

@@ -1,6 +1,6 @@
 # Browser Session Compromise Dashboard
 
-A local-only Chromium extension for triaging browser sessions after suspected cookie theft.
+A local-only Chromium extension for Chrome, Brave, and Microsoft Edge that helps triage browser sessions after suspected cookie theft.
 
 It inventories cookie/session indicators in the current browser profile, prioritizes high-value accounts, links to provider session/security pages where available, and lets you clear local browser cookies/site data for risky sites.
 
@@ -27,6 +27,10 @@ It inventories cookie/session indicators in the current browser profile, priorit
 - It does not send scan data to any server.
 
 Local cleanup logs out this browser profile, but provider-side session revocation, password rotation, MFA review, recovery-method review, and connected-app review still need to happen on the provider's own security pages.
+
+## Browser Compatibility
+
+This extension is designed for Chromium-based browsers and works on Google Chrome, Brave, and Microsoft Edge. It should also work on other Chromium browsers that support Manifest V3, the `chrome.cookies`, `chrome.browsingData`, `chrome.tabs`, and `chrome.storage` APIs, and unpacked extension loading.
 
 ## Install From Source
 
@@ -131,4 +135,3 @@ Manual browser QA is documented in [docs/manual-qa.md](docs/manual-qa.md).
 ## License
 
 GPL-3.0. See [LICENSE](LICENSE).
-
