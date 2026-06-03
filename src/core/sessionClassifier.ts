@@ -1,11 +1,16 @@
 import type { RedactedCookie } from './types';
 
 const AUTH_NAME_PATTERNS = [
+  /^\.AspNetCore\.Cookies$/i,
+  /^(?:HSID|SSID|APISID|SAPISID|SIDCC)$/i,
+  /^__Secure-\dPSID(?:CC)?$/i,
   /(^|[._-])sid($|[._-])/i,
   /session/i,
   /auth/i,
   /identity/i,
   /login/i,
+  /(^|[._-])logged[._-]?in($|[._-])/i,
+  /wordpress_logged_in_/i,
   /remember/i,
   /refresh/i,
   /(^|[._-])token($|[._-])/i,

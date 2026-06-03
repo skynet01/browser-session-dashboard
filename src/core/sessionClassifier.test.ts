@@ -23,6 +23,20 @@ describe('classifyCookie', () => {
     }
   );
 
+  it.each([
+    '.AspNetCore.Cookies',
+    'HSID',
+    'SSID',
+    'APISID',
+    'SAPISID',
+    'SIDCC',
+    '__Secure-1PSID',
+    '__Secure-1PSIDCC',
+    'wordpress_logged_in_abcdef'
+  ])('flags common framework and identity-provider auth cookie %s', (name) => {
+    expect(classifyCookie({ ...baseCookie, name, httpOnly: true }).likelySession).toBe(true);
+  });
+
   it('does not treat csrf alone as a login session', () => {
     const result = classifyCookie({ ...baseCookie, name: 'csrf_token' });
 

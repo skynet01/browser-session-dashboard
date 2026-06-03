@@ -69,6 +69,153 @@ const PROVIDERS: Record<string, ProviderEntry> = {
     category: 'Finance',
     highValue: true
   },
+  'wealthfront.com': {
+    label: 'Review Wealthfront login',
+    url: 'https://www.wealthfront.com/login',
+    instructions: 'Review account security, trusted devices, transfers, connected accounts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'betterment.com': {
+    label: 'Review Betterment login',
+    url: 'https://www.betterment.com/login',
+    instructions: 'Review security settings, connected accounts, transfers, and recent account activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'fundrise.com': {
+    label: 'Review Fundrise login',
+    url: 'https://fundrise.com/login',
+    instructions: 'Review account settings, bank links, transfers, investments, and recent account activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'mercury.com': {
+    label: 'Review Mercury login',
+    url: 'https://mercury.com/login',
+    instructions: 'Review account users, cards, transfers, API access, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'stripe.com': {
+    label: 'Review Stripe dashboard login',
+    url: 'https://dashboard.stripe.com/login',
+    instructions: 'Review team members, API keys, connected apps, payouts, webhooks, and recent dashboard activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'raisin.com': {
+    label: 'Review Raisin login',
+    url: 'https://www.raisin.com/en-us/login/',
+    instructions: 'Review profile security, linked funding accounts, transfers, and account activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'm1.com': {
+    label: 'Review M1 login',
+    url: 'https://m1.com/login',
+    instructions: 'Review security settings, transfers, connected banks, cards, and recent account activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'm1finance.com': {
+    label: 'Review M1 login',
+    url: 'https://m1.com/login',
+    instructions: 'Review security settings, transfers, connected banks, cards, and recent account activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'chase.com': {
+    label: 'Review Chase sign-in',
+    url: 'https://secure.chase.com/web/auth/dashboard',
+    instructions: 'Review security settings, devices, cards, transfers, external accounts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'bankofamerica.com': {
+    label: 'Review Bank of America sign-in',
+    url: 'https://secure.bankofamerica.com/login/sign-in/signOnV2Screen.go',
+    instructions: 'Review security settings, trusted devices, cards, transfers, alerts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'wellsfargo.com': {
+    label: 'Review Wells Fargo sign-in',
+    url: 'https://connect.secure.wellsfargo.com/auth/login/present',
+    instructions: 'Review security settings, devices, cards, transfers, alerts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'capitalone.com': {
+    label: 'Review Capital One sign-in',
+    url: 'https://verified.capitalone.com/auth/signin',
+    instructions: 'Review security settings, trusted devices, cards, transfers, alerts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'citi.com': {
+    label: 'Review Citi sign-in',
+    url: 'https://online.citi.com/US/login.do',
+    instructions: 'Review security settings, devices, cards, transfers, alerts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'usbank.com': {
+    label: 'Review U.S. Bank sign-in',
+    url: 'https://onlinebanking.usbank.com/Auth/Login',
+    instructions: 'Review security settings, devices, cards, transfers, alerts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'ally.com': {
+    label: 'Review Ally sign-in',
+    url: 'https://secure.ally.com/',
+    instructions: 'Review security settings, devices, cards, transfers, linked accounts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'sofi.com': {
+    label: 'Review SoFi login',
+    url: 'https://www.sofi.com/login/',
+    instructions: 'Review security settings, connected accounts, transfers, cards, investments, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'schwab.com': {
+    label: 'Review Schwab login',
+    url: 'https://www.schwab.com/login',
+    instructions: 'Review security settings, trusted devices, transfers, external accounts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'fidelity.com': {
+    label: 'Review Fidelity login',
+    url: 'https://digital.fidelity.com/prgw/digital/login/full-page',
+    instructions: 'Review security settings, trusted devices, transfers, external accounts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'vanguard.com': {
+    label: 'Review Vanguard login',
+    url: 'https://investor.vanguard.com/my-account/log-on',
+    instructions: 'Review security settings, trusted devices, transfers, external accounts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'robinhood.com': {
+    label: 'Review Robinhood login',
+    url: 'https://robinhood.com/login',
+    instructions: 'Review security settings, trusted devices, cards, transfers, crypto, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
+  'etrade.com': {
+    label: 'Review E*TRADE login',
+    url: 'https://us.etrade.com/e/t/user/login',
+    instructions: 'Review security settings, trusted devices, transfers, external accounts, and recent activity.',
+    category: 'Finance',
+    highValue: true
+  },
   'ebay.com': {
     label: 'Review eBay sign-in security',
     url: 'https://signin.ebay.com/ws/eBayISAPI.dll?SignIn&ru=https%3A%2F%2Fwww.ebay.com%2Fmye%2Fmyebay%2Faccount',

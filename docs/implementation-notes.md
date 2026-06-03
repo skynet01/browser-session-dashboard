@@ -202,3 +202,27 @@
   - Focused tests then passed: `src/core/inventoryBuilder.test.ts` and `src/ui/dashboard.test.ts`.
   - `npm run typecheck`, `npm test`, and `npm run build` passed.
   - Chrome headless smoke check passed against built `dist/dashboard.html`: Discord/WhatsApp/Steam/GitHub category pills rendered, expanded provider rows appeared, and no horizontal overflow was detected at the smoke viewport. Screenshot artifact: `output/provider-category-dashboard-smoke.png`.
+
+## Broader Session Detection, Finance Providers, and Bulk Cleanup
+
+- Fixed the classifier gap found by the security scan:
+  - ASP.NET auth cookies such as `.AspNetCore.Cookies` now count as likely login sessions.
+  - Google-style identity cookies such as `HSID`, `SSID`, `APISID`, `SAPISID`, `SIDCC`, `__Secure-1PSID`, and `__Secure-1PSIDCC` now count as likely login sessions.
+  - WordPress login cookies such as `wordpress_logged_in_...` now count as likely login sessions.
+- Expanded finance and banking provider coverage:
+  - Wealthfront, Betterment, Fundrise, Mercury, Stripe, Raisin, M1/M1 Finance.
+  - Chase, Bank of America, Wells Fargo, Capital One, Citi, U.S. Bank, Ally, SoFi.
+  - Schwab, Fidelity, Vanguard, Robinhood, and E*TRADE.
+- Added a dashboard bulk cleanup option:
+  - `Clear high-severity sessions (N)` targets only `critical` or `high` rows with `likelySessionCookieCount > 0`.
+  - It uses one confirmation prompt, calls the existing per-site cleanup route for each target, and removes successfully cleared rows from the dashboard immediately.
+  - High-severity rows without likely login-session cookies are intentionally not included.
+- Added `docs/chrome-web-store-submission.md` after checking current official Chrome Web Store policy docs.
+  - Main publication risks are broad host permissions, cookie metadata handling, browsing-data deletion, tab metadata, privacy-policy disclosure, and MV3 remote-code review.
+  - Strong recommendation for submission: include a short but explicit privacy policy and a permission rationale in the Store listing/about copy.
+- Verification after this batch:
+  - Red tests first failed for the audited classifier misses, missing finance providers, and missing bulk-cleanup UI.
+  - Focused tests passed: `src/ui/dashboard.test.ts`, `src/core/sessionClassifier.test.ts`, and `src/core/inventoryBuilder.test.ts`.
+  - `npm run typecheck`, `npm test`, `npm audit --omit=dev`, and `npm run build` passed.
+  - Chrome headless smoke passed against built `dist/dashboard.html` served from localhost: bulk cleanup removed GitHub/PayPal target rows, left the high-severity non-session row in place, rendered the response log, and had no horizontal overflow.
+  - Static remote-code pattern check found no `eval`, `new Function`, remote script tags, or remote dynamic imports in `src`, `public`, or `dist`.

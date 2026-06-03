@@ -169,4 +169,84 @@ describe('buildInventory', () => {
     expect(getProviderCategory('whatsapp.com')).toBe('Messaging');
     expect(getProviderCategory('steamcommunity.com')).toBe('Gaming');
   });
+
+  it('includes finance and banking provider response links', () => {
+    expect(getKnownProviderSiteKeys()).toEqual(expect.arrayContaining([
+      'wealthfront.com',
+      'betterment.com',
+      'fundrise.com',
+      'mercury.com',
+      'stripe.com',
+      'raisin.com',
+      'm1.com',
+      'm1finance.com',
+      'chase.com',
+      'bankofamerica.com',
+      'wellsfargo.com',
+      'capitalone.com',
+      'citi.com',
+      'usbank.com',
+      'ally.com',
+      'sofi.com',
+      'schwab.com',
+      'fidelity.com',
+      'vanguard.com',
+      'robinhood.com',
+      'etrade.com'
+    ]));
+
+    expect(getProviderCategory('wealthfront.com')).toBe('Finance');
+    expect(getProviderCategory('stripe.com')).toBe('Finance');
+    expect(getProviderCategory('chase.com')).toBe('Finance');
+    expect(getProviderAction('wealthfront.com')?.url).toContain('wealthfront.com');
+    expect(getProviderAction('betterment.com')?.url).toContain('betterment.com');
+    expect(getProviderAction('fundrise.com')?.url).toContain('fundrise.com');
+    expect(getProviderAction('mercury.com')?.url).toContain('mercury.com');
+    expect(getProviderAction('stripe.com')?.url).toContain('dashboard.stripe.com');
+    expect(getProviderAction('raisin.com')?.url).toContain('raisin.com');
+    expect(getProviderAction('m1.com')?.url).toContain('m1.com');
+    expect(getProviderAction('m1finance.com')?.url).toContain('m1.com');
+    expect(getProviderAction('bankofamerica.com')?.url).toContain('bankofamerica.com');
+    expect(getProviderAction('wellsfargo.com')?.url).toContain('wellsfargo.com');
+  });
+
+  it('raises audited auth-cookie misses into likely-session inventory risk', () => {
+    const inventory = buildInventory([
+      {
+        name: '.AspNetCore.Cookies',
+        domain: '.example.com',
+        path: '/',
+        hostOnly: false,
+        httpOnly: true,
+        secure: true,
+        session: false,
+        sameSite: 'lax',
+        expirationDate: 1_790_000_000,
+        storeId: '0',
+        partitioned: false
+      },
+      {
+        name: '__Secure-1PSID',
+        domain: '.google.com',
+        path: '/',
+        hostOnly: false,
+        httpOnly: true,
+        secure: true,
+        session: false,
+        sameSite: 'lax',
+        expirationDate: 1_790_000_000,
+        storeId: '0',
+        partitioned: false
+      }
+    ], []);
+
+    expect(inventory.find((site) => site.siteKey === 'example.com')).toMatchObject({
+      likelySessionCookieCount: 1,
+      risk: 'high'
+    });
+    expect(inventory.find((site) => site.siteKey === 'google.com')).toMatchObject({
+      likelySessionCookieCount: 1,
+      risk: 'critical'
+    });
+  });
 });

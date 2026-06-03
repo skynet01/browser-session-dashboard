@@ -70,6 +70,11 @@ async function handleClick(event: Event): Promise<void> {
     return;
   }
 
+  if (action === 'clear-high-risk') {
+    await clearHighSeveritySessions();
+    return;
+  }
+
   if (!siteKey) return;
   const site = state.snapshot?.inventory.find((item) => item.siteKey === siteKey);
   if (!site) return;
@@ -126,27 +131,52 @@ async function clearSite(site: SiteInventory): Promise<void> {
   );
   if (!confirmed) return;
 
-  const response = await sendMessage({
-    type: 'clearLocalSiteData',
-    siteKey: site.siteKey,
-    domains: site.domains,
-    origins: originsForSite(site)
-  });
+  const response = await sendMessage(cleanupRequestForSite(site));
 
   if (response.ok && response.result) {
-    if (state.snapshot) {
-      state.snapshot = {
-        ...state.snapshot,
-        inventory: state.snapshot.inventory.filter((item) => item.siteKey !== site.siteKey),
-        reviewedSiteKeys: state.snapshot.reviewedSiteKeys.filter((siteKey) => siteKey !== site.siteKey)
-      };
-    }
+    removeSitesFromSnapshot([site.siteKey]);
     state.actionLog = [
       `${site.siteKey}: local cleanup ${response.result.status}. ${response.result.warning}`,
       ...state.actionLog
     ];
   } else {
     state.error = response.ok ? 'Cleanup completed without an action result.' : response.error;
+  }
+
+  render();
+}
+
+async function clearHighSeveritySessions(): Promise<void> {
+  const targets = highSeveritySessionSites();
+  if (targets.length === 0) return;
+
+  const confirmed = confirm(
+    `Clear local cookies and site data for ${targets.length} high-severity sites with likely login sessions? Local cleanup logs out this browser, but it does not revoke stolen cookies.`
+  );
+  if (!confirmed) return;
+
+  const cleared: string[] = [];
+  const failures: string[] = [];
+
+  for (const site of targets) {
+    const response = await sendMessage(cleanupRequestForSite(site));
+    if (response.ok && response.result) {
+      cleared.push(site.siteKey);
+    } else {
+      failures.push(site.siteKey);
+    }
+  }
+
+  if (cleared.length > 0) {
+    removeSitesFromSnapshot(cleared);
+    state.actionLog = [
+      `Cleared local data for ${cleared.length} high-severity likely login session ${cleared.length === 1 ? 'site' : 'sites'}: ${cleared.join(', ')}. Local cleanup does not revoke stolen cookies.`,
+      ...state.actionLog
+    ];
+  }
+
+  if (failures.length > 0) {
+    state.error = `Cleanup failed for: ${failures.join(', ')}`;
   }
 
   render();
@@ -192,6 +222,7 @@ function render(): void {
 
   const inventory = state.snapshot?.inventory ?? [];
   const filtered = filteredInventory(inventory);
+  const bulkCleanupCount = highSeveritySessionSites().length;
 
   app.innerHTML = `
     <header class="topbar">
@@ -210,9 +241,14 @@ function render(): void {
         <button type="button" data-action="scan">${state.loading ? 'Scanning...' : 'Scan browser profile'}</button>
       </div>
     </header>
-    <section class="warning-strip" role="note">
-      <strong>Local cleanup does not revoke stolen cookies.</strong>
-      Clearing local browser data logs out this browser. Revoke sessions from provider security pages where possible.
+    <section class="warning-strip warning-strip--actions" role="note">
+      <div>
+        <strong>Local cleanup does not revoke stolen cookies.</strong>
+        Clearing local browser data logs out this browser. Revoke sessions from provider security pages where possible.
+      </div>
+      <button type="button" class="secondary" data-action="clear-high-risk" ${bulkCleanupCount === 0 ? 'disabled' : ''}>
+        Clear high-severity sessions (${bulkCleanupCount})
+      </button>
     </section>
     ${state.error ? `<section class="error-banner" role="alert">${escapeHtml(state.error)}</section>` : ''}
     <section class="summary-grid" aria-label="Scan summary">
@@ -303,6 +339,32 @@ function filteredInventory(inventory: SiteInventory[]): SiteInventory[] {
     const severityMatches = state.severity === 'all' || site.risk === state.severity;
     return severityMatches && siteMatchesQuery(site, state.query);
   });
+}
+
+function highSeveritySessionSites(): SiteInventory[] {
+  return (state.snapshot?.inventory ?? []).filter((site) =>
+    (site.risk === 'critical' || site.risk === 'high') && site.likelySessionCookieCount > 0
+  );
+}
+
+function cleanupRequestForSite(site: SiteInventory): RuntimeRequest {
+  return {
+    type: 'clearLocalSiteData',
+    siteKey: site.siteKey,
+    domains: site.domains,
+    origins: originsForSite(site)
+  };
+}
+
+function removeSitesFromSnapshot(siteKeys: string[]): void {
+  if (!state.snapshot) return;
+
+  const removed = new Set(siteKeys);
+  state.snapshot = {
+    ...state.snapshot,
+    inventory: state.snapshot.inventory.filter((item) => !removed.has(item.siteKey)),
+    reviewedSiteKeys: state.snapshot.reviewedSiteKeys.filter((siteKey) => !removed.has(siteKey))
+  };
 }
 
 function originsForSite(site: SiteInventory): string[] {

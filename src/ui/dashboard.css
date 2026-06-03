@@ -215,6 +215,17 @@ h1 {
   color: oklch(0.36 0.065 62);
 }
 
+.warning-strip--actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.warning-strip--actions button {
+  flex: 0 0 auto;
+}
+
 .context-strip {
   border-color: oklch(0.88 0.045 160);
   background: oklch(0.96 0.035 160);
@@ -500,8 +511,14 @@ label span {
   }
 
   .topbar-actions,
-  .row-actions {
+  .row-actions,
+  .warning-strip--actions {
     justify-content: flex-start;
+  }
+
+  .warning-strip--actions {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .row-actions--right {

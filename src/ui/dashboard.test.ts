@@ -156,6 +156,81 @@ describe('dashboard', () => {
     expect(normalizedText()).toContain('example.com');
   });
 
+  test('bulk-clears high-severity sites with likely login sessions', async () => {
+    const bulkSnapshot: ScanSnapshot = {
+      ...snapshot,
+      inventory: [
+        snapshot.inventory[0]!,
+        {
+          siteKey: 'paypal.com',
+          domains: ['.paypal.com'],
+          cookieCount: 3,
+          likelySessionCookieCount: 1,
+          likelySessionCookieNames: ['auth_token'],
+          openTabCount: 0,
+          risk: 'high',
+          providerCategory: 'Finance',
+          reasons: ['likely session/auth cookies present']
+        },
+        {
+          siteKey: 'security-news.example',
+          domains: ['security-news.example'],
+          cookieCount: 4,
+          likelySessionCookieCount: 0,
+          openTabCount: 2,
+          risk: 'high',
+          reasons: ['site is currently open and may recreate local state']
+        },
+        snapshot.inventory[1]!
+      ]
+    };
+    const sendMessage = installRuntimeMock([
+      { ok: true, snapshot: bulkSnapshot },
+      {
+        ok: true,
+        result: {
+          siteKey: 'github.com',
+          status: 'completed',
+          warning: 'Local cleanup logs out this browser profile, but it does not revoke already stolen cookies.'
+        }
+      },
+      {
+        ok: true,
+        result: {
+          siteKey: 'paypal.com',
+          status: 'completed',
+          warning: 'Local cleanup logs out this browser profile, but it does not revoke already stolen cookies.'
+        }
+      }
+    ]);
+    vi.stubGlobal('confirm', vi.fn(() => true));
+
+    await import('./dashboard');
+    await waitForAsyncUi();
+
+    expect(normalizedText()).toContain('Clear high-severity sessions (2)');
+    document.querySelector<HTMLButtonElement>('[data-action="clear-high-risk"]')?.click();
+    await waitForAsyncUi();
+
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('2 high-severity sites with likely login sessions'));
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'clearLocalSiteData',
+      siteKey: 'github.com'
+    }));
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'clearLocalSiteData',
+      siteKey: 'paypal.com'
+    }));
+    expect(sendMessage).not.toHaveBeenCalledWith(expect.objectContaining({
+      type: 'clearLocalSiteData',
+      siteKey: 'security-news.example'
+    }));
+    expect(document.querySelector<HTMLElement>('[data-site-row="github.com"]')).toBeNull();
+    expect(document.querySelector<HTMLElement>('[data-site-row="paypal.com"]')).toBeNull();
+    expect(normalizedText()).toContain('security-news.example');
+    expect(normalizedText()).toContain('example.com');
+  });
+
   test('records reviewed sites and turns completed rows green', async () => {
     installRuntimeMock([
       { ok: true },
@@ -192,8 +267,9 @@ function installRuntimeMock(responses: unknown[]) {
 }
 
 async function waitForAsyncUi(): Promise<void> {
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let turn = 0; turn < 6; turn += 1) {
+    await Promise.resolve();
+  }
 }
 
 function normalizedText(): string {
