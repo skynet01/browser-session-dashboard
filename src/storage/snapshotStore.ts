@@ -52,27 +52,6 @@ export async function getLatestSnapshot(
   return isScanSnapshot(snapshot) ? snapshot : undefined;
 }
 
-export async function markSiteReviewed(
-  siteKey: string,
-  chromeApi: ChromeStorageApi = chrome
-): Promise<ScanSnapshot | undefined> {
-  const latest = await getLatestSnapshot(chromeApi);
-  if (!latest) return undefined;
-
-  const snapshot: ScanSnapshot = {
-    ...latest,
-    reviewedSiteKeys: [...new Set([...latest.reviewedSiteKeys, siteKey])].sort()
-  };
-  const history = await getSnapshotHistory(chromeApi);
-
-  await storageSet({
-    [LATEST_SNAPSHOT_KEY]: snapshot,
-    [SNAPSHOT_HISTORY_KEY]: [snapshot, ...history.filter((item) => item.id !== snapshot.id)].slice(0, MAX_HISTORY)
-  }, chromeApi);
-
-  return snapshot;
-}
-
 export async function removeSitesFromLatestSnapshot(
   siteKeys: string[],
   chromeApi: ChromeStorageApi = chrome

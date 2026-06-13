@@ -1,7 +1,8 @@
 import { buildInventory as defaultBuildInventory } from '../core/inventoryBuilder';
 import { getKnownProviderCookieUrls } from '../core/providerDirectory';
-import type { OpenTabSummary, RedactedCookie, SiteInventory } from '../core/types';
-import { getLatestSnapshot, markSiteReviewed, saveScanSnapshot, type ScanSnapshot } from '../storage/snapshotStore';
+import type { OpenTabSummary, RedactedCookie, SiteInventory, SiteReviews } from '../core/types';
+import { getLatestSnapshot, removeSitesFromLatestSnapshot, saveScanSnapshot, type ScanSnapshot } from '../storage/snapshotStore';
+import { getSiteReviews, removeSiteReview, setSiteReview } from '../storage/reviewStore';
 import { clearLocalSiteData, type LocalCleanupRequest, type LocalCleanupResult } from './chromeCleanup';
 import { collectRedactedCookies } from './chromeCookies';
 import { collectOpenTabContexts } from './chromeTabs';
@@ -51,6 +52,7 @@ type RuntimeRequest =
   | { type: 'getCapabilities' }
   | { type: 'getLatestSnapshot' }
   | { type: 'markReviewed'; siteKey: string }
+  | { type: 'unmarkReviewed'; siteKey: string }
   | ({ type: 'clearLocalSiteData' } & LocalCleanupRequest);
 
 export type ExtensionCapabilities = {
@@ -58,8 +60,16 @@ export type ExtensionCapabilities = {
   allSitesAccess?: boolean;
 };
 
+type RuntimeSuccessResponse = {
+  ok: true;
+  snapshot?: ScanSnapshot;
+  result?: LocalCleanupResult;
+  capabilities?: ExtensionCapabilities;
+  reviews?: SiteReviews;
+};
+
 type RuntimeResponse =
-  | { ok: true; snapshot?: ScanSnapshot; result?: LocalCleanupResult; capabilities?: ExtensionCapabilities }
+  | RuntimeSuccessResponse
   | { ok: false; error: string };
 
 type RouterDependencies = {
@@ -110,16 +120,33 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
             suspectedCompromiseDate: request.suspectedCompromiseDate
           }, chromeApi);
 
-          return { ok: true, snapshot };
+          return { ok: true, snapshot, reviews: await getSiteReviews(chromeApi) };
         }
         case 'getLatestSnapshot':
-          return responseWithSnapshot(await getLatestSnapshot(chromeApi));
+          return {
+            ...responseWithSnapshot(await getLatestSnapshot(chromeApi)),
+            reviews: await getSiteReviews(chromeApi)
+          };
         case 'getCapabilities':
           return { ok: true, capabilities: await browserCapabilities(chromeApi) };
-        case 'markReviewed':
-          return responseWithSnapshot(await markSiteReviewed(request.siteKey, chromeApi));
-        case 'clearLocalSiteData':
-          return { ok: true, result: await clearSiteData(request, chromeApi) };
+        case 'markReviewed': {
+          const latest = await getLatestSnapshot(chromeApi);
+          const site = latest?.inventory.find((item) => item.siteKey === request.siteKey);
+          const reviews = await setSiteReview(request.siteKey, {
+            reviewedAt: new Date().toISOString(),
+            sessionCookieFingerprints: site?.likelySessionCookieFingerprints ?? []
+          }, chromeApi);
+
+          return { ...responseWithSnapshot(latest), reviews };
+        }
+        case 'unmarkReviewed':
+          return { ok: true, reviews: await removeSiteReview(request.siteKey, chromeApi) };
+        case 'clearLocalSiteData': {
+          const result = await clearSiteData(request, chromeApi);
+          const snapshot = await removeSitesFromLatestSnapshot([request.siteKey], chromeApi);
+
+          return { ok: true, result, ...(snapshot ? { snapshot } : {}) };
+        }
       }
     } catch (error) {
       return {
@@ -130,7 +157,7 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
   };
 }
 
-function responseWithSnapshot(snapshot: ScanSnapshot | undefined): RuntimeResponse {
+function responseWithSnapshot(snapshot: ScanSnapshot | undefined): RuntimeSuccessResponse {
   return snapshot === undefined ? { ok: true } : { ok: true, snapshot };
 }
 
@@ -155,6 +182,7 @@ function isRuntimeRequest(message: unknown): message is RuntimeRequest {
   return type === 'getLatestSnapshot'
     || type === 'getCapabilities'
     || type === 'markReviewed'
+    || type === 'unmarkReviewed'
     || type === 'clearLocalSiteData';
 }
 

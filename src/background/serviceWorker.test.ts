@@ -65,37 +65,64 @@ describe('serviceWorker', () => {
     expect(JSON.stringify(chromeMock.__storage)).not.toContain('"value"');
   });
 
-  it('routes latest snapshot, capabilities, cleanup, and mark-reviewed messages', async () => {
+  it('routes latest snapshot, capabilities, cleanup, and review messages', async () => {
     const chromeMock = installChromeMock();
+    const inventory = [{
+      siteKey: 'github.com',
+      domains: ['.github.com'],
+      cookieCount: 2,
+      likelySessionCookieCount: 1,
+      likelySessionCookieNames: ['user_session'],
+      likelySessionCookieFingerprints: ['user_session|.github.com|/|0|1790000000'],
+      openTabCount: 1,
+      risk: 'critical' as const,
+      reasons: ['known high-value provider']
+    }];
     const router = createServiceWorkerRouter({
       chromeApi: chromeMock,
       collectCookies: vi.fn(),
       collectTabs: vi.fn(),
-      buildInventory: vi.fn(),
+      buildInventory: vi.fn().mockReturnValue(inventory),
       clearLocalSiteData: vi.fn().mockResolvedValue({ status: 'completed', siteKey: 'github.com' })
     });
 
     const scan = await router({ type: 'scan' });
-    expect(scan.ok).toBe(true);
+    expect(scan).toMatchObject({ ok: true, reviews: {} });
 
-    expect(await router({ type: 'getLatestSnapshot' })).toMatchObject({ ok: true });
+    expect(await router({ type: 'getLatestSnapshot' })).toMatchObject({
+      ok: true,
+      snapshot: { inventory },
+      reviews: {}
+    });
     expect(await router({ type: 'getCapabilities' })).toMatchObject({
       ok: true,
       capabilities: { localCleanup: true }
     });
-    expect(await router({ type: 'markReviewed', siteKey: 'github.com' })).toMatchObject({
+
+    const marked = await router({ type: 'markReviewed', siteKey: 'github.com' });
+    expect(marked).toMatchObject({
       ok: true,
-      snapshot: { reviewedSiteKeys: ['github.com'] }
+      reviews: {
+        'github.com': {
+          sessionCookieFingerprints: ['user_session|.github.com|/|0|1790000000']
+        }
+      }
     });
-    expect(await router({
+
+    const cleared = await router({
       type: 'clearLocalSiteData',
       siteKey: 'github.com',
       domains: ['.github.com'],
       origins: ['https://github.com']
-    })).toMatchObject({
-      ok: true,
-      result: { status: 'completed', siteKey: 'github.com' }
     });
+    expect(cleared).toMatchObject({
+      ok: true,
+      result: { status: 'completed', siteKey: 'github.com' },
+      snapshot: { inventory: [] }
+    });
+
+    const unmarked = await router({ type: 'unmarkReviewed', siteKey: 'github.com' });
+    expect(unmarked).toMatchObject({ ok: true, reviews: {} });
   });
 
   it('reports cleanup as unsupported when browsingData is unavailable', async () => {
