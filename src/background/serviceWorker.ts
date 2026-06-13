@@ -105,6 +105,13 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
     buildInventory: buildInventoryFromInputs = defaultBuildInventory,
     clearLocalSiteData: clearSiteData = clearLocalSiteData
   } = dependencies;
+  let mutationQueue = Promise.resolve();
+
+  function enqueueMutation<T>(operation: () => Promise<T>): Promise<T> {
+    const run = mutationQueue.then(operation, operation);
+    mutationQueue = run.then(() => undefined, () => undefined);
+    return run;
+  }
 
   return async function route(message: unknown): Promise<RuntimeResponse> {
     try {
@@ -115,12 +122,17 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
           const cookies = (await collectCookies(chromeApi, getKnownProviderCookieUrls())) ?? [];
           const tabs = (await collectTabs(chromeApi)) ?? [];
           const inventory = (await buildInventoryFromInputs(cookies, tabs)) ?? [];
-          const snapshot = await saveScanSnapshot({
-            inventory,
-            suspectedCompromiseDate: request.suspectedCompromiseDate
-          }, chromeApi);
+          const { snapshot, reviews } = await enqueueMutation(async () => {
+            const reviews = await getSiteReviews(chromeApi);
+            const snapshot = await saveScanSnapshot({
+              inventory,
+              suspectedCompromiseDate: request.suspectedCompromiseDate
+            }, chromeApi);
 
-          return { ok: true, snapshot, reviews: await getSiteReviews(chromeApi) };
+            return { snapshot, reviews };
+          });
+
+          return { ok: true, snapshot, reviews };
         }
         case 'getLatestSnapshot':
           return {
@@ -130,20 +142,24 @@ export function createServiceWorkerRouter(dependencies: RouterDependencies) {
         case 'getCapabilities':
           return { ok: true, capabilities: await browserCapabilities(chromeApi) };
         case 'markReviewed': {
-          const latest = await getLatestSnapshot(chromeApi);
-          const site = latest?.inventory.find((item) => item.siteKey === request.siteKey);
-          const reviews = await setSiteReview(request.siteKey, {
-            reviewedAt: new Date().toISOString(),
-            sessionCookieFingerprints: site?.likelySessionCookieFingerprints ?? []
-          }, chromeApi);
+          const { latest, reviews } = await enqueueMutation(async () => {
+            const latest = await getLatestSnapshot(chromeApi);
+            const site = latest?.inventory.find((item) => item.siteKey === request.siteKey);
+            const reviews = await setSiteReview(request.siteKey, {
+              reviewedAt: new Date().toISOString(),
+              sessionCookieFingerprints: site?.likelySessionCookieFingerprints ?? []
+            }, chromeApi);
+
+            return { latest, reviews };
+          });
 
           return { ...responseWithSnapshot(latest), reviews };
         }
         case 'unmarkReviewed':
-          return { ok: true, reviews: await removeSiteReview(request.siteKey, chromeApi) };
+          return { ok: true, reviews: await enqueueMutation(() => removeSiteReview(request.siteKey, chromeApi)) };
         case 'clearLocalSiteData': {
           const result = await clearSiteData(request, chromeApi);
-          const snapshot = await removeSitesFromLatestSnapshot([request.siteKey], chromeApi);
+          const snapshot = await enqueueMutation(() => removeSitesFromLatestSnapshot([request.siteKey], chromeApi));
 
           return { ok: true, result, ...(snapshot ? { snapshot } : {}) };
         }

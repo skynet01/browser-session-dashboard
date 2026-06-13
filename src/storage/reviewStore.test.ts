@@ -35,6 +35,19 @@ describe('reviewStore', () => {
       'github.com': { reviewedAt: snapshot.scannedAt },
       'paypal.com': { reviewedAt: snapshot.scannedAt }
     });
+    expect(chromeMock.__storage['siteReviews']).toEqual({
+      'github.com': { reviewedAt: snapshot.scannedAt },
+      'paypal.com': { reviewedAt: snapshot.scannedAt }
+    });
+
+    await saveScanSnapshot({
+      inventory: [],
+      reviewedSiteKeys: ['example.com']
+    }, chromeMock);
+    expect(await getSiteReviews(chromeMock)).toEqual({
+      'github.com': { reviewedAt: snapshot.scannedAt },
+      'paypal.com': { reviewedAt: snapshot.scannedAt }
+    });
 
     await removeSiteReview('github.com', chromeMock);
 

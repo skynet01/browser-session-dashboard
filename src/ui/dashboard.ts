@@ -257,7 +257,6 @@ async function markReviewed(site: SiteInventory): Promise<void> {
 
   if (response.ok && response.reviews) {
     state.reviews = response.reviews;
-    if (response.snapshot) state.snapshot = response.snapshot;
     state.actionLog = [`${site.siteKey}: marked reviewed`, ...state.actionLog];
   } else {
     state.error = response.ok ? 'Reviewed state was not updated.' : response.error;
@@ -337,8 +336,8 @@ function render(): void {
 
   const focused = captureFocus();
   const inventory = state.snapshot?.inventory ?? [];
-  const unreviewed = inventory.filter((site) => !state.reviews[site.siteKey]);
-  const reviewedCount = inventory.length - unreviewed.length;
+  const actionable = inventory.filter(isActionableSessionSite);
+  const reviewedCount = inventory.filter((site) => state.reviews[site.siteKey]).length;
   const filtered = filteredInventory(inventory);
   const bulkCleanupCount = highSeveritySessionSites().length;
 
@@ -374,8 +373,8 @@ function render(): void {
     ${state.error ? `<section class="error-banner" role="alert">${escapeHtml(state.error)}</section>` : ''}
     <section class="summary-grid" aria-label="Scan summary">
       ${summaryTile('Sites', pluralize(inventory.length, 'site'))}
-      ${summaryTile('Critical', String(countRisk(unreviewed, 'critical')))}
-      ${summaryTile('High', String(countRisk(unreviewed, 'high')))}
+      ${summaryTile('Critical', String(countRisk(actionable, 'critical')))}
+      ${summaryTile('High', String(countRisk(actionable, 'high')))}
       ${summaryTile('Reviewed', String(reviewedCount))}
       ${summaryTile('Response date', state.snapshot?.suspectedCompromiseDate ? formatDateOnly(state.snapshot.suspectedCompromiseDate) : 'Not set')}
       ${summaryTile('Scanned', state.snapshot ? formatDate(state.snapshot.scannedAt) : 'Not yet')}
@@ -471,13 +470,13 @@ function reviewNote(status: SiteReviewStatus | undefined): string {
 
   if (status?.newSession) {
     notes.push(
-      `Session cookies changed since your review on ${formatDate(status.reviewedAt)} - if you revoked sessions then, this session was created after the theft and is not affected.`
+      `Session-cookie metadata changed since your review on ${formatDate(status.reviewedAt)}; verify this site again.`
     );
     if (status.residualSession) {
-      notes.push('Some cookies from before the review are still present.');
+      notes.push('Some cookie metadata from before the review is still present.');
     }
   } else if (status?.residualSession) {
-    notes.push('Same session cookies as at review time.');
+    notes.push('Session-cookie metadata matches the review baseline. Cookie values are not stored, so confirm provider-side revocation.');
   }
 
   return notes.length > 0 ? `<p class="review-note">${notes.map(escapeHtml).join(' ')}</p>` : '';
@@ -501,8 +500,13 @@ function highSeveritySessionSites(): SiteInventory[] {
   return (state.snapshot?.inventory ?? []).filter((site) =>
     (site.risk === 'critical' || site.risk === 'high')
     && site.likelySessionCookieCount > 0
-    && !state.reviews[site.siteKey]
+    && isActionableSessionSite(site)
   );
+}
+
+function isActionableSessionSite(site: SiteInventory): boolean {
+  const status = deriveReviewStatus(site, state.reviews[site.siteKey]);
+  return !status || status.newSession;
 }
 
 function cleanupRequestForSite(site: SiteInventory): RuntimeRequest {

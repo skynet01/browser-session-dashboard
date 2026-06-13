@@ -263,7 +263,7 @@ describe('dashboard', () => {
     expect(row?.classList.contains('is-reviewed')).toBe(true);
     expect(row?.classList.contains('is-new-session')).toBe(false);
     expect(normalizedText()).toContain('Reviewed');
-    expect(normalizedText()).toContain('Same session cookies as at review time.');
+    expect(normalizedText()).toContain('Session-cookie metadata matches the review baseline.');
     expect(normalizedText()).toContain('Unmark');
 
     document.querySelector<HTMLButtonElement>('[data-action="unreview"][data-site="github.com"]')?.click();
@@ -274,7 +274,7 @@ describe('dashboard', () => {
     expect(normalizedText()).toContain('Mark done');
   });
 
-  test('labels changed sessions on reviewed sites as new and not affected', async () => {
+  test('labels changed sessions on reviewed sites as needing verification', async () => {
     installRuntimeMock([{
       ok: true,
       snapshot,
@@ -292,10 +292,11 @@ describe('dashboard', () => {
     const row = document.querySelector<HTMLElement>('[data-site-row="github.com"]');
     expect(row?.classList.contains('is-new-session')).toBe(true);
     expect(normalizedText()).toContain('New session');
-    expect(normalizedText()).toContain('this session was created after the theft and is not affected');
+    expect(normalizedText()).toContain('Session-cookie metadata changed since your review');
+    expect(normalizedText()).toContain('verify this site again');
   });
 
-  test('excludes reviewed sites from high-severity counts and bulk cleanup', async () => {
+  test('keeps changed reviewed sessions in high-severity counts and bulk cleanup', async () => {
     installRuntimeMock([{
       ok: true,
       snapshot,
@@ -311,10 +312,63 @@ describe('dashboard', () => {
     await waitForAsyncUi();
 
     const text = normalizedText();
+    expect(text).toContain('Critical 1');
+    expect(text).toContain('Reviewed 1');
+    expect(text).toContain('Clear high-severity sessions (1)');
+    expect(document.querySelector<HTMLButtonElement>('[data-action="clear-high-risk"]')?.disabled).toBe(false);
+  });
+
+  test('excludes unchanged reviewed sites from high-severity counts and bulk cleanup', async () => {
+    installRuntimeMock([{
+      ok: true,
+      snapshot,
+      reviews: {
+        'github.com': {
+          reviewedAt: '2026-06-10T10:00:00.000Z',
+          sessionCookieFingerprints: ['user_session|.github.com|/|0|1790000000']
+        }
+      }
+    }]);
+
+    await import('./dashboard');
+    await waitForAsyncUi();
+
+    const text = normalizedText();
     expect(text).toContain('Critical 0');
     expect(text).toContain('Reviewed 1');
     expect(text).toContain('Clear high-severity sessions (0)');
     expect(document.querySelector<HTMLButtonElement>('[data-action="clear-high-risk"]')?.disabled).toBe(true);
+  });
+
+  test('shows mixed old and changed session-cookie metadata on reviewed sites', async () => {
+    installRuntimeMock([{
+      ok: true,
+      snapshot: {
+        ...snapshot,
+        inventory: [{
+          ...snapshot.inventory[0]!,
+          likelySessionCookieFingerprints: [
+            'user_session|.github.com|/|0|1700000000',
+            'user_session|.github.com|/|0|1790000000'
+          ]
+        }, snapshot.inventory[1]!]
+      },
+      reviews: {
+        'github.com': {
+          reviewedAt: '2026-06-10T10:00:00.000Z',
+          sessionCookieFingerprints: ['user_session|.github.com|/|0|1700000000']
+        }
+      }
+    }]);
+
+    await import('./dashboard');
+    await waitForAsyncUi();
+
+    const row = document.querySelector<HTMLElement>('[data-site-row="github.com"]');
+    expect(row?.classList.contains('is-new-session')).toBe(true);
+    expect(normalizedText()).toContain('New session');
+    expect(normalizedText()).toContain('Session-cookie metadata changed since your review');
+    expect(normalizedText()).toContain('Some cookie metadata from before the review is still present.');
   });
 
   test('keeps focus in the search box while typing', async () => {

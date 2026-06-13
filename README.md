@@ -14,7 +14,7 @@ It inventories cookie/session indicators in the current browser profile, priorit
 - Prioritizes known high-value providers across identity, email, finance, developer, messaging, gaming, productivity, commerce, cloud, entertainment, and social categories.
 - Provides provider review links for common services such as Google, Microsoft, GitHub, PayPal, Discord, WhatsApp, Steam, Stripe, Wealthfront, Betterment, Chase, Bank of America, Wells Fargo, Fidelity, Vanguard, Robinhood, and more.
 - Supports an optional suspected compromise date, shown as incident context. Chrome does not expose cookie creation dates, so cookies are never filtered by date.
-- Remembers reviewed sites across scans, and labels sessions whose cookies changed after your review as new sessions that were not affected by the original theft.
+- Remembers reviewed sites across scans, and labels sessions whose cookie metadata changed after your review so you know to verify that site again.
 - Lets you mark reviewed sites as done, and unmark them later.
 - Clears local cookies/site data for one site, or bulk-clears high-severity sites with likely login sessions.
 - Stores redacted scan snapshots locally so results survive dashboard reloads.

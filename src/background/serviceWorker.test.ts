@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createServiceWorkerRouter, initServiceWorker } from './serviceWorker';
 import { installChromeMock, sendRuntimeMessage } from '../test/chromeMocks';
+import { saveScanSnapshot } from '../storage/snapshotStore';
 
 describe('serviceWorker', () => {
   beforeEach(() => {
@@ -63,6 +64,40 @@ describe('serviceWorker', () => {
       }
     });
     expect(JSON.stringify(chromeMock.__storage)).not.toContain('"value"');
+  });
+
+  it('migrates legacy reviewed sites before the first post-upgrade scan overwrites the latest snapshot', async () => {
+    const chromeMock = installChromeMock();
+    await saveScanSnapshot({
+      inventory: [],
+      reviewedSiteKeys: ['github.com']
+    }, chromeMock);
+    const inventory = [{
+      siteKey: 'github.com',
+      domains: ['.github.com'],
+      cookieCount: 2,
+      likelySessionCookieCount: 1,
+      likelySessionCookieNames: ['user_session'],
+      likelySessionCookieFingerprints: ['user_session|.github.com|/|0|1790000000'],
+      openTabCount: 1,
+      risk: 'critical' as const,
+      reasons: ['known high-value provider']
+    }];
+    const router = createServiceWorkerRouter({
+      chromeApi: chromeMock,
+      collectCookies: vi.fn(),
+      collectTabs: vi.fn(),
+      buildInventory: vi.fn().mockReturnValue(inventory)
+    });
+
+    const response = await router({ type: 'scan' });
+
+    expect(response).toMatchObject({
+      ok: true,
+      snapshot: { inventory },
+      reviews: { 'github.com': expect.objectContaining({ reviewedAt: expect.any(String) }) }
+    });
+    expect(chromeMock.__storage['siteReviews']).toHaveProperty('github.com');
   });
 
   it('routes latest snapshot, capabilities, cleanup, and review messages', async () => {
