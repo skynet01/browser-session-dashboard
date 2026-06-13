@@ -57,3 +57,10 @@ export type SiteInventory = {
   providerCategory?: ProviderCategory;
   providerAction?: ProviderAction;
 };
+
+export type SiteReview = {
+  reviewedAt: string;
+  sessionCookieFingerprints?: string[];
+};
+
+export type SiteReviews = Record<string, SiteReview>;
