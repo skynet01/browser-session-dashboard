@@ -13,8 +13,9 @@ It inventories cookie/session indicators in the current browser profile, priorit
 - Flags likely login/session cookies using conservative name-based heuristics.
 - Prioritizes known high-value providers across identity, email, finance, developer, messaging, gaming, productivity, commerce, cloud, entertainment, and social categories.
 - Provides provider review links for common services such as Google, Microsoft, GitHub, PayPal, Discord, WhatsApp, Steam, Stripe, Wealthfront, Betterment, Chase, Bank of America, Wells Fargo, Fidelity, Vanguard, Robinhood, and more.
-- Supports an optional suspected compromise date. Cookies with known creation dates after that date are filtered out when browser metadata is available.
-- Lets you mark reviewed sites as done.
+- Supports an optional suspected compromise date, shown as incident context. Chrome does not expose cookie creation dates, so cookies are never filtered by date.
+- Remembers reviewed sites across scans, and labels sessions whose cookies changed after your review as new sessions that were not affected by the original theft.
+- Lets you mark reviewed sites as done, and unmark them later.
 - Clears local cookies/site data for one site, or bulk-clears high-severity sites with likely login sessions.
 - Stores redacted scan snapshots locally so results survive dashboard reloads.
 
@@ -89,7 +90,7 @@ The extension is designed around local-only handling:
 
 - Raw cookie values are dropped immediately by the Chrome API adapter.
 - UI, storage snapshots, tests, docs, and logs must never contain cookie values.
-- Stored snapshots contain only redacted metadata such as domain/site key, cookie names, flags, counts, risk, reasons, provider category/action metadata, timestamps, and reviewed state.
+- Stored snapshots and review records contain only redacted metadata such as domain/site key, cookie names, flags, counts, risk, reasons, provider category/action metadata, timestamps, review timestamps, and metadata-only session-cookie fingerprints.
 - Scan, scoring, storage, and cleanup do not require network requests.
 - Provider links are normal user-clicked links that open in a tab.
 

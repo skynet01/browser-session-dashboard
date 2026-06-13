@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Effective date: 2026-06-03
+Effective date: 2026-06-11
 
 Browser Session Compromise Dashboard is a local-only browser extension for triaging local browser session indicators after suspected cookie theft.
 
@@ -12,7 +12,7 @@ The extension can inspect local browser-profile metadata needed to build the das
 - Cookie names and cookie metadata such as path, flags, SameSite status, session/persistent status, store ID, partition marker, and expiration metadata when available.
 - Open HTTP/HTTPS tab URLs and titles for risk-scoring context.
 - Local cleanup action status.
-- Redacted scan timestamps, optional suspected compromise date, risk labels, reasons, provider categories, provider action links, and reviewed-state flags.
+- Redacted scan timestamps, optional suspected compromise date, risk labels, reasons, provider categories, provider action links, review timestamps, and metadata-only session-cookie fingerprints (cookie name, domain, path, store ID, and expiration - never cookie values).
 
 ## Cookie Values
 
@@ -20,7 +20,7 @@ The extension does not read, display, store, export, hash, transmit, sell, or sh
 
 ## Local Storage
 
-The extension stores redacted scan snapshots in `chrome.storage.local` so the dashboard can remember the latest scan and reviewed-state flags across reloads.
+The extension stores redacted scan snapshots and per-site review records (review timestamp plus metadata-only session-cookie fingerprints) in `chrome.storage.local` so the dashboard can remember the latest scan and reviewed state across reloads and rescans.
 
 Stored snapshots do not include cookie values.
 
@@ -50,4 +50,3 @@ The extension requests:
 ## Contact
 
 Open an issue at https://github.com/skynet01/browser-session-dashboard/issues for privacy or security questions.
-
