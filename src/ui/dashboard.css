@@ -240,7 +240,7 @@ h1 {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 16px;
   margin-top: 24px;
 }
@@ -393,6 +393,29 @@ label span {
 .reviewed-pill {
   background: var(--accent-soft);
   color: var(--accent-deep);
+}
+
+.site-row.is-new-session {
+  border-color: oklch(0.7 0.13 145);
+  background:
+    linear-gradient(180deg, oklch(0.91 0.07 145), transparent 92px),
+    oklch(0.985 0.022 145);
+}
+
+.new-session-pill {
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  text-transform: uppercase;
+  background: oklch(0.52 0.13 145);
+  color: var(--surface);
+}
+
+.review-note {
+  color: oklch(0.4 0.09 145);
+  font-size: 0.82rem;
+  margin: 4px 0 0;
 }
 
 .domains {

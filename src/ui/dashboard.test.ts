@@ -317,6 +317,22 @@ describe('dashboard', () => {
     expect(document.querySelector<HTMLButtonElement>('[data-action="clear-high-risk"]')?.disabled).toBe(true);
   });
 
+  test('keeps focus in the search box while typing', async () => {
+    installRuntimeMock([{ ok: true, snapshot }]);
+
+    await import('./dashboard');
+    await waitForAsyncUi();
+
+    const search = document.querySelector<HTMLInputElement>('[data-control="search"]')!;
+    search.focus();
+    search.value = 'git';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const searchAfterRender = document.querySelector<HTMLInputElement>('[data-control="search"]')!;
+    expect(document.activeElement).toBe(searchAfterRender);
+    expect(searchAfterRender.value).toBe('git');
+  });
+
   test('disables local cleanup controls when the browser does not support cleanup', async () => {
     const sendMessage = installRuntimeMock([{ ok: true, snapshot }], { localCleanup: false });
 
