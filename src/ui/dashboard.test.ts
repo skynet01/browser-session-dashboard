@@ -13,6 +13,7 @@ const snapshot: ScanSnapshot = {
       cookieCount: 2,
       likelySessionCookieCount: 1,
       likelySessionCookieNames: ['user_session'],
+      likelySessionCookieFingerprints: ['user_session|.github.com|/|0|1790000000'],
       openTabCount: 1,
       risk: 'critical',
       providerCategory: 'Developer',
@@ -66,7 +67,8 @@ describe('dashboard', () => {
     expect(text).not.toContain('Export checklist');
     expect(document.querySelector('[data-action="export"]')).toBeNull();
     expect(text).toContain('Response date May 20, 2026');
-    expect(text).toContain('Cookies with known creation dates after that date are hidden');
+    expect(text).toContain('shown for incident context');
+    expect(text).not.toContain('Cookies with known creation dates after that date are hidden');
     expect(text).toContain('Local cleanup does not revoke stolen cookies.');
     expect(text).not.toContain('secret-cookie-value');
     expect(text).not.toContain('cookie value:');
@@ -131,6 +133,7 @@ describe('dashboard', () => {
       { ok: true, snapshot },
       {
         ok: true,
+        snapshot: { ...snapshot, inventory: [snapshot.inventory[1]!] },
         result: {
           siteKey: 'github.com',
           status: 'completed',
@@ -231,11 +234,21 @@ describe('dashboard', () => {
     expect(normalizedText()).toContain('example.com');
   });
 
-  test('records reviewed sites and turns completed rows green', async () => {
-    installRuntimeMock([
+  test('marks sites reviewed, shows the reviewed state, and supports unmarking', async () => {
+    const sendMessage = installRuntimeMock([
       { ok: true },
       { ok: true, snapshot },
-      { ok: true, snapshot: { ...snapshot, reviewedSiteKeys: ['github.com'] } }
+      {
+        ok: true,
+        snapshot,
+        reviews: {
+          'github.com': {
+            reviewedAt: '2026-06-11T10:00:00.000Z',
+            sessionCookieFingerprints: ['user_session|.github.com|/|0|1790000000']
+          }
+        }
+      },
+      { ok: true, reviews: {} }
     ]);
 
     await import('./dashboard');
@@ -245,8 +258,63 @@ describe('dashboard', () => {
     document.querySelector<HTMLButtonElement>('[data-action="review"][data-site="github.com"]')?.click();
     await waitForAsyncUi();
 
+    expect(sendMessage).toHaveBeenCalledWith({ type: 'markReviewed', siteKey: 'github.com' });
+    const row = document.querySelector<HTMLElement>('[data-site-row="github.com"]');
+    expect(row?.classList.contains('is-reviewed')).toBe(true);
+    expect(row?.classList.contains('is-new-session')).toBe(false);
     expect(normalizedText()).toContain('Reviewed');
-    expect(document.querySelector<HTMLElement>('[data-site-row="github.com"]')?.classList.contains('is-reviewed')).toBe(true);
+    expect(normalizedText()).toContain('Same session cookies as at review time.');
+    expect(normalizedText()).toContain('Unmark');
+
+    document.querySelector<HTMLButtonElement>('[data-action="unreview"][data-site="github.com"]')?.click();
+    await waitForAsyncUi();
+
+    expect(sendMessage).toHaveBeenCalledWith({ type: 'unmarkReviewed', siteKey: 'github.com' });
+    expect(document.querySelector<HTMLElement>('[data-site-row="github.com"]')?.classList.contains('is-reviewed')).toBe(false);
+    expect(normalizedText()).toContain('Mark done');
+  });
+
+  test('labels changed sessions on reviewed sites as new and not affected', async () => {
+    installRuntimeMock([{
+      ok: true,
+      snapshot,
+      reviews: {
+        'github.com': {
+          reviewedAt: '2026-06-10T10:00:00.000Z',
+          sessionCookieFingerprints: ['user_session|.github.com|/|0|1700000000']
+        }
+      }
+    }]);
+
+    await import('./dashboard');
+    await waitForAsyncUi();
+
+    const row = document.querySelector<HTMLElement>('[data-site-row="github.com"]');
+    expect(row?.classList.contains('is-new-session')).toBe(true);
+    expect(normalizedText()).toContain('New session');
+    expect(normalizedText()).toContain('this session was created after the theft and is not affected');
+  });
+
+  test('excludes reviewed sites from high-severity counts and bulk cleanup', async () => {
+    installRuntimeMock([{
+      ok: true,
+      snapshot,
+      reviews: {
+        'github.com': {
+          reviewedAt: '2026-06-10T10:00:00.000Z',
+          sessionCookieFingerprints: ['user_session|.github.com|/|0|1700000000']
+        }
+      }
+    }]);
+
+    await import('./dashboard');
+    await waitForAsyncUi();
+
+    const text = normalizedText();
+    expect(text).toContain('Critical 0');
+    expect(text).toContain('Reviewed 1');
+    expect(text).toContain('Clear high-severity sessions (0)');
+    expect(document.querySelector<HTMLButtonElement>('[data-action="clear-high-risk"]')?.disabled).toBe(true);
   });
 
   test('disables local cleanup controls when the browser does not support cleanup', async () => {

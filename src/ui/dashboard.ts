@@ -1,5 +1,6 @@
 import './dashboard.css';
-import type { SiteInventory, SiteRisk } from '../core/types';
+import type { SiteInventory, SiteReviews, SiteRisk } from '../core/types';
+import { deriveReviewStatus, type SiteReviewStatus } from '../core/reviewStatus';
 import type { LocalCleanupResult } from '../background/chromeCleanup';
 import type { ScanSnapshot } from '../storage/snapshotStore';
 import { escapeHtml, pluralize, riskLabel, sentenceCase, siteMatchesQuery } from './components';
@@ -9,6 +10,7 @@ type RuntimeRequest =
   | { type: 'getCapabilities' }
   | { type: 'getLatestSnapshot' }
   | { type: 'markReviewed'; siteKey: string }
+  | { type: 'unmarkReviewed'; siteKey: string }
   | { type: 'clearLocalSiteData'; siteKey: string; domains: string[]; origins: string[] };
 
 type ExtensionCapabilities = {
@@ -17,11 +19,18 @@ type ExtensionCapabilities = {
 };
 
 type RuntimeResponse =
-  | { ok: true; snapshot?: ScanSnapshot; result?: LocalCleanupResult; capabilities?: ExtensionCapabilities }
+  | {
+      ok: true;
+      snapshot?: ScanSnapshot;
+      result?: LocalCleanupResult;
+      capabilities?: ExtensionCapabilities;
+      reviews?: SiteReviews;
+    }
   | { ok: false; error: string };
 
 type DashboardState = {
   snapshot?: ScanSnapshot;
+  reviews: SiteReviews;
   severity: SiteRisk | 'all';
   query: string;
   suspectedCompromiseDate: string;
@@ -32,6 +41,7 @@ type DashboardState = {
 };
 
 const state: DashboardState = {
+  reviews: {},
   severity: 'all',
   query: '',
   suspectedCompromiseDate: '',
@@ -70,6 +80,10 @@ async function loadLatestSnapshot(): Promise<void> {
     state.error = response.error;
   }
 
+  if (response.ok && response.reviews) {
+    state.reviews = response.reviews;
+  }
+
   render();
 }
 
@@ -100,6 +114,10 @@ async function handleClick(event: Event): Promise<void> {
 
   if (action === 'review') {
     await markReviewed(site);
+  }
+
+  if (action === 'unreview') {
+    await unmarkReviewed(site);
   }
 }
 
@@ -139,6 +157,7 @@ async function scan(): Promise<void> {
   state.loading = false;
   if (response.ok && response.snapshot) {
     state.snapshot = response.snapshot;
+    if (response.reviews) state.reviews = response.reviews;
     state.actionLog = [`Scan completed at ${formatDate(response.snapshot.scannedAt)}`, ...state.actionLog];
   } else {
     state.error = response.ok ? 'Scan completed without a snapshot.' : response.error;
@@ -169,7 +188,11 @@ async function clearSite(site: SiteInventory): Promise<void> {
   const response = await sendMessage(cleanupRequestForSite(site));
 
   if (response.ok && response.result) {
-    removeSitesFromSnapshot([site.siteKey]);
+    if (response.snapshot) {
+      state.snapshot = response.snapshot;
+    } else {
+      removeSitesFromSnapshot([site.siteKey]);
+    }
     state.actionLog = [
       `${site.siteKey}: local cleanup ${response.result.status}. ${response.result.warning}`,
       ...state.actionLog
@@ -198,18 +221,24 @@ async function clearHighSeveritySessions(): Promise<void> {
 
   const cleared: string[] = [];
   const failures: string[] = [];
+  let updatedSnapshot: ScanSnapshot | undefined;
 
   for (const site of targets) {
     const response = await sendMessage(cleanupRequestForSite(site));
     if (response.ok && response.result) {
       cleared.push(site.siteKey);
+      if (response.snapshot) updatedSnapshot = response.snapshot;
     } else {
       failures.push(site.siteKey);
     }
   }
 
   if (cleared.length > 0) {
-    removeSitesFromSnapshot(cleared);
+    if (updatedSnapshot) {
+      state.snapshot = updatedSnapshot;
+    } else {
+      removeSitesFromSnapshot(cleared);
+    }
     state.actionLog = [
       `Cleared local data for ${cleared.length} high-severity likely login session ${cleared.length === 1 ? 'site' : 'sites'}: ${cleared.join(', ')}. Local cleanup does not revoke stolen cookies.`,
       ...state.actionLog
@@ -226,9 +255,23 @@ async function clearHighSeveritySessions(): Promise<void> {
 async function markReviewed(site: SiteInventory): Promise<void> {
   const response = await sendMessage({ type: 'markReviewed', siteKey: site.siteKey });
 
-  if (response.ok && response.snapshot) {
-    state.snapshot = response.snapshot;
+  if (response.ok && response.reviews) {
+    state.reviews = response.reviews;
+    if (response.snapshot) state.snapshot = response.snapshot;
     state.actionLog = [`${site.siteKey}: marked reviewed`, ...state.actionLog];
+  } else {
+    state.error = response.ok ? 'Reviewed state was not updated.' : response.error;
+  }
+
+  render();
+}
+
+async function unmarkReviewed(site: SiteInventory): Promise<void> {
+  const response = await sendMessage({ type: 'unmarkReviewed', siteKey: site.siteKey });
+
+  if (response.ok && response.reviews) {
+    state.reviews = response.reviews;
+    state.actionLog = [`${site.siteKey}: review mark removed`, ...state.actionLog];
   } else {
     state.error = response.ok ? 'Reviewed state was not updated.' : response.error;
   }
@@ -258,10 +301,44 @@ async function sendMessage(message: RuntimeRequest): Promise<RuntimeResponse> {
   }
 }
 
+type FocusSnapshot = {
+  control: string;
+  selectionStart: number | null;
+  selectionEnd: number | null;
+};
+
+function captureFocus(): FocusSnapshot | undefined {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !active.dataset.control) return undefined;
+
+  const selectable = active instanceof HTMLInputElement && (active.type === 'search' || active.type === 'text');
+
+  return {
+    control: active.dataset.control,
+    selectionStart: selectable ? active.selectionStart : null,
+    selectionEnd: selectable ? active.selectionEnd : null
+  };
+}
+
+function restoreFocus(focused: FocusSnapshot | undefined): void {
+  if (!focused || !app) return;
+
+  const element = app.querySelector<HTMLElement>(`[data-control="${focused.control}"]`);
+  if (!element) return;
+
+  element.focus();
+  if (element instanceof HTMLInputElement && focused.selectionStart !== null) {
+    element.setSelectionRange(focused.selectionStart, focused.selectionEnd ?? focused.selectionStart);
+  }
+}
+
 function render(): void {
   if (!app) return;
 
+  const focused = captureFocus();
   const inventory = state.snapshot?.inventory ?? [];
+  const unreviewed = inventory.filter((site) => !state.reviews[site.siteKey]);
+  const reviewedCount = inventory.length - unreviewed.length;
   const filtered = filteredInventory(inventory);
   const bulkCleanupCount = highSeveritySessionSites().length;
 
@@ -297,15 +374,16 @@ function render(): void {
     ${state.error ? `<section class="error-banner" role="alert">${escapeHtml(state.error)}</section>` : ''}
     <section class="summary-grid" aria-label="Scan summary">
       ${summaryTile('Sites', pluralize(inventory.length, 'site'))}
-      ${summaryTile('Critical', String(countRisk(inventory, 'critical')))}
-      ${summaryTile('High', String(countRisk(inventory, 'high')))}
+      ${summaryTile('Critical', String(countRisk(unreviewed, 'critical')))}
+      ${summaryTile('High', String(countRisk(unreviewed, 'high')))}
+      ${summaryTile('Reviewed', String(reviewedCount))}
       ${summaryTile('Response date', state.snapshot?.suspectedCompromiseDate ? formatDateOnly(state.snapshot.suspectedCompromiseDate) : 'Not set')}
       ${summaryTile('Scanned', state.snapshot ? formatDate(state.snapshot.scannedAt) : 'Not yet')}
     </section>
     ${state.snapshot?.suspectedCompromiseDate ? `
       <section class="context-strip">
-        Date-based scan context uses ${escapeHtml(formatDateOnly(state.snapshot.suspectedCompromiseDate))} as the suspected compromise date.
-        Cookies with known creation dates after that date are hidden; Chrome may still show current cookies without creation-date metadata.
+        ${escapeHtml(formatDateOnly(state.snapshot.suspectedCompromiseDate))} is the suspected compromise date, shown for incident context.
+        Chrome does not expose cookie creation dates, so cookies cannot be filtered by date - sessions you reviewed are tracked per site instead.
       </section>
     ` : ''}
     <section class="workspace">
@@ -338,21 +416,31 @@ function render(): void {
       </aside>
     </section>
   `;
+
+  restoreFocus(focused);
 }
 
 function renderSiteRow(site: SiteInventory): string {
-  const reviewed = state.snapshot?.reviewedSiteKeys.includes(site.siteKey) ?? false;
+  const status = deriveReviewStatus(site, state.reviews[site.siteKey]);
   const primaryAction = site.providerAction ?? loginActionForSite(site.siteKey);
+  const rowClasses = [
+    'site-row',
+    `risk-${site.risk}`,
+    status ? 'is-reviewed' : '',
+    status?.newSession ? 'is-new-session' : ''
+  ].filter(Boolean).join(' ');
+
   return `
-    <article class="site-row risk-${site.risk}${reviewed ? ' is-reviewed' : ''}" data-site-row="${escapeHtml(site.siteKey)}">
+    <article class="${rowClasses}" data-site-row="${escapeHtml(site.siteKey)}">
       <div class="site-main">
         <div class="site-title">
           <h2>${escapeHtml(site.siteKey)}</h2>
           <span class="risk-pill">${riskLabel(site.risk)}</span>
           ${site.providerCategory ? `<span class="category-pill">${escapeHtml(site.providerCategory)}</span>` : ''}
-          ${reviewed ? '<span class="reviewed-pill">Reviewed</span>' : ''}
+          ${reviewPill(status)}
         </div>
         <p class="domains">${escapeHtml(site.domains.join(', ') || site.siteKey)}</p>
+        ${reviewNote(status)}
         <ul class="reason-list">
           ${site.reasons.map((reason) => `<li>${escapeHtml(sentenceCase(reason))}</li>`).join('')}
         </ul>
@@ -365,10 +453,34 @@ function renderSiteRow(site: SiteInventory): string {
       <div class="row-actions row-actions--right">
         <a class="button-link" href="${escapeHtml(primaryAction.url)}" target="_blank" rel="noreferrer" data-action="${site.providerAction ? 'provider' : 'login'}" data-site="${escapeHtml(site.siteKey)}">${escapeHtml(primaryAction.label)}</a>
         <button type="button" class="secondary" data-action="clear" data-site="${escapeHtml(site.siteKey)}" ${state.capabilities.localCleanup ? '' : 'disabled'}>${state.capabilities.localCleanup ? 'Clear local data' : 'Cleanup unavailable'}</button>
-        <button type="button" class="ghost" data-action="review" data-site="${escapeHtml(site.siteKey)}">Mark done</button>
+        <button type="button" class="ghost" data-action="${status ? 'unreview' : 'review'}" data-site="${escapeHtml(site.siteKey)}">${status ? 'Unmark' : 'Mark done'}</button>
       </div>
     </article>
   `;
+}
+
+function reviewPill(status: SiteReviewStatus | undefined): string {
+  if (!status) return '';
+  if (status.newSession) return '<span class="new-session-pill">New session</span>';
+
+  return `<span class="reviewed-pill">Reviewed ${escapeHtml(formatDate(status.reviewedAt))}</span>`;
+}
+
+function reviewNote(status: SiteReviewStatus | undefined): string {
+  const notes: string[] = [];
+
+  if (status?.newSession) {
+    notes.push(
+      `Session cookies changed since your review on ${formatDate(status.reviewedAt)} - if you revoked sessions then, this session was created after the theft and is not affected.`
+    );
+    if (status.residualSession) {
+      notes.push('Some cookies from before the review are still present.');
+    }
+  } else if (status?.residualSession) {
+    notes.push('Same session cookies as at review time.');
+  }
+
+  return notes.length > 0 ? `<p class="review-note">${notes.map(escapeHtml).join(' ')}</p>` : '';
 }
 
 function loginActionForSite(siteKey: string): { label: string; url: string } {
@@ -387,7 +499,9 @@ function filteredInventory(inventory: SiteInventory[]): SiteInventory[] {
 
 function highSeveritySessionSites(): SiteInventory[] {
   return (state.snapshot?.inventory ?? []).filter((site) =>
-    (site.risk === 'critical' || site.risk === 'high') && site.likelySessionCookieCount > 0
+    (site.risk === 'critical' || site.risk === 'high')
+    && site.likelySessionCookieCount > 0
+    && !state.reviews[site.siteKey]
   );
 }
 
