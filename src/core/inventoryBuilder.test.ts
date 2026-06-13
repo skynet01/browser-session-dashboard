@@ -82,42 +82,6 @@ describe('buildInventory', () => {
     expect(serialized).not.toContain('"value"');
   });
 
-  it('excludes cookies created after the suspected compromise date when creation metadata exists', () => {
-    const inventory = buildInventory([
-      {
-        name: 'sessionid',
-        domain: '.before.example',
-        path: '/',
-        hostOnly: false,
-        httpOnly: true,
-        secure: true,
-        session: false,
-        sameSite: 'lax',
-        expirationDate: 1_790_000_000,
-        creationDate: Date.UTC(2026, 4, 20, 12) / 1000,
-        storeId: '0',
-        partitioned: false
-      },
-      {
-        name: 'sessionid',
-        domain: '.after.example',
-        path: '/',
-        hostOnly: false,
-        httpOnly: true,
-        secure: true,
-        session: false,
-        sameSite: 'lax',
-        expirationDate: 1_790_000_000,
-        creationDate: Date.UTC(2026, 4, 21, 0) / 1000,
-        storeId: '0',
-        partitioned: false
-      }
-    ], [], { suspectedCompromiseDate: '2026-05-20' });
-
-    expect(inventory.map((site) => site.siteKey)).toContain('before.example');
-    expect(inventory.map((site) => site.siteKey)).not.toContain('after.example');
-  });
-
   it('includes required provider response links', () => {
     expect(getKnownProviderSiteKeys()).toEqual(expect.arrayContaining([
       'google.com',

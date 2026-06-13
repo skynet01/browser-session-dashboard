@@ -10,19 +10,13 @@ type SiteGroup = {
   tabs: OpenTabSummary[];
 };
 
-export type InventoryBuildOptions = {
-  suspectedCompromiseDate?: string;
-};
-
 export function buildInventory(
   cookies: RedactedCookie[],
-  tabs: OpenTabSummary[],
-  options: InventoryBuildOptions = {}
+  tabs: OpenTabSummary[]
 ): SiteInventory[] {
   const bySite = new Map<string, SiteGroup>();
-  const filteredCookies = filterCookiesBySuspectedDate(cookies, options.suspectedCompromiseDate);
 
-  for (const cookie of filteredCookies) {
+  for (const cookie of cookies) {
     groupFor(bySite, getSiteKey(cookie.domain)).cookies.push(cookie);
   }
 
@@ -36,28 +30,6 @@ export function buildInventory(
   return [...bySite.entries()]
     .map(([siteKey, group]) => buildSiteInventory(siteKey, group))
     .sort(sortByRiskThenName);
-}
-
-function filterCookiesBySuspectedDate(
-  cookies: RedactedCookie[],
-  suspectedCompromiseDate: string | undefined
-): RedactedCookie[] {
-  const endOfDate = endOfDateSeconds(suspectedCompromiseDate);
-  if (endOfDate === undefined) return cookies;
-
-  return cookies.filter((cookie) => cookie.creationDate === undefined || cookie.creationDate <= endOfDate);
-}
-
-function endOfDateSeconds(value: string | undefined): number | undefined {
-  if (!value) return undefined;
-
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return undefined;
-
-  const [, year, month, day] = match.map(Number);
-  if (!year || !month || !day) return undefined;
-
-  return Date.UTC(year, month - 1, day, 23, 59, 59, 999) / 1000;
 }
 
 function buildSiteInventory(siteKey: string, group: SiteGroup): SiteInventory {

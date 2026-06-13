@@ -53,8 +53,7 @@ describe('serviceWorker', () => {
     ]));
     expect(buildInventory).toHaveBeenCalledWith(
       [{ name: 'sessionid', domain: '.example.com' }],
-      [{ url: 'https://example.com', host: 'example.com', origin: 'https://example.com' }],
-      { suspectedCompromiseDate: '2026-05-20' }
+      [{ url: 'https://example.com', host: 'example.com', origin: 'https://example.com' }]
     );
     expect(response).toMatchObject({
       ok: true,
