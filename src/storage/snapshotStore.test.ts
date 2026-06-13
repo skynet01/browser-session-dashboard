@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getLatestSnapshot, markSiteReviewed, saveScanSnapshot } from './snapshotStore';
+import { getLatestSnapshot, removeSitesFromLatestSnapshot, saveScanSnapshot } from './snapshotStore';
 import { installChromeMock } from '../test/chromeMocks';
 
 describe('snapshotStore', () => {
@@ -30,7 +30,7 @@ describe('snapshotStore', () => {
     expect(JSON.stringify(chromeMock.__storage)).not.toContain('"value"');
   });
 
-  it('retrieves the latest snapshot and marks sites reviewed', async () => {
+  it('retrieves the latest snapshot', async () => {
     const chromeMock = installChromeMock();
     const saved = await saveScanSnapshot({
       inventory: [{
@@ -46,10 +46,36 @@ describe('snapshotStore', () => {
     }, chromeMock);
 
     expect(await getLatestSnapshot(chromeMock)).toMatchObject({ id: saved.id });
+  });
 
-    const reviewed = await markSiteReviewed('github.com', chromeMock);
+  it('removes cleared sites from the stored latest snapshot and history', async () => {
+    const chromeMock = installChromeMock();
+    await saveScanSnapshot({
+      inventory: [
+        {
+          siteKey: 'github.com',
+          domains: ['.github.com'],
+          cookieCount: 2,
+          likelySessionCookieCount: 1,
+          openTabCount: 1,
+          risk: 'critical',
+          reasons: ['known high-value provider']
+        },
+        {
+          siteKey: 'example.com',
+          domains: ['example.com'],
+          cookieCount: 1,
+          likelySessionCookieCount: 0,
+          openTabCount: 0,
+          risk: 'low',
+          reasons: []
+        }
+      ]
+    }, chromeMock);
 
-    expect(reviewed?.reviewedSiteKeys).toEqual(['github.com']);
-    expect((await getLatestSnapshot(chromeMock))?.reviewedSiteKeys).toEqual(['github.com']);
+    const updated = await removeSitesFromLatestSnapshot(['github.com'], chromeMock);
+
+    expect(updated?.inventory.map((site) => site.siteKey)).toEqual(['example.com']);
+    expect((await getLatestSnapshot(chromeMock))?.inventory.map((site) => site.siteKey)).toEqual(['example.com']);
   });
 });
