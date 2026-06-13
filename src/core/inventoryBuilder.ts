@@ -1,3 +1,4 @@
+import { cookieFingerprint } from './cookieFingerprint';
 import { getProviderAction, getProviderCategory, isHighValueProvider } from './providerDirectory';
 import { scoreSiteRisk } from './riskScoring';
 import { classifyCookie } from './sessionClassifier';
@@ -93,8 +94,10 @@ function buildSiteInventory(siteKey: string, group: SiteGroup): SiteInventory {
     ])]
   };
   const likelySessionCookieNames = [...new Set(likelySessionCookies.map((cookie) => cookie.name))].sort();
+  const likelySessionCookieFingerprints = [...new Set(likelySessionCookies.map(cookieFingerprint))].sort();
 
   if (likelySessionCookieNames.length > 0) inventory.likelySessionCookieNames = likelySessionCookieNames;
+  if (likelySessionCookieFingerprints.length > 0) inventory.likelySessionCookieFingerprints = likelySessionCookieFingerprints;
   if (providerAction !== undefined) inventory.providerAction = providerAction;
   if (providerCategory !== undefined) inventory.providerCategory = providerCategory;
 

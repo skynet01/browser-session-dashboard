@@ -51,6 +51,7 @@ export type SiteInventory = {
   cookieCount: number;
   likelySessionCookieCount: number;
   likelySessionCookieNames?: string[];
+  likelySessionCookieFingerprints?: string[];
   openTabCount: number;
   risk: SiteRisk;
   reasons: string[];

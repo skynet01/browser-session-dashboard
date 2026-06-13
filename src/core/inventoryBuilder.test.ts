@@ -210,6 +210,16 @@ describe('buildInventory', () => {
     expect(getProviderAction('wellsfargo.com')?.url).toContain('wellsfargo.com');
   });
 
+  it('exposes sorted unique fingerprints for likely session cookies only', () => {
+    const inventory = buildInventory(cookies, tabs);
+    const github = inventory.find((site) => site.siteKey === 'github.com');
+    const example = inventory.find((site) => site.siteKey === 'example.co.uk');
+
+    expect(github?.likelySessionCookieFingerprints)
+      .toEqual(['sessionid|.github.com|/|0|1790000000']);
+    expect(example?.likelySessionCookieFingerprints).toBeUndefined();
+  });
+
   it('raises audited auth-cookie misses into likely-session inventory risk', () => {
     const inventory = buildInventory([
       {
