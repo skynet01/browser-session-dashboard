@@ -345,7 +345,7 @@ function render(): void {
     <header class="topbar">
       <div>
         <p class="eyebrow">Local exposure inventory</p>
-        <h1>Browser Session Compromise Dashboard</h1>
+        <h1>Browser Session Auditor</h1>
         <p class="claim">
           These are the browser sessions/sites currently present and likely exposed if this browser profile's cookies were stolen.
         </p>
@@ -559,7 +559,7 @@ function emptyState(totalCount: number): string {
 }
 
 function websiteAccessMessage(): string {
-  return 'Website access is not granted for all websites. In Safari, click the extension toolbar item and choose Always Allow on Every Website, or open Safari Settings > Extensions > Browser Session Compromise Dashboard > Websites and set access to Allow. Without that, cookie inventory can be empty while tabs still appear.';
+  return 'Website access is not granted for all websites. In Safari, click the extension toolbar item and choose Always Allow on Every Website, or open Safari Settings > Extensions > Browser Session Auditor > Websites and set access to Allow. Without that, cookie inventory can be empty while tabs still appear.';
 }
 
 function formatDate(value: string): string {

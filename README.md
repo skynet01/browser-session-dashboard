@@ -1,10 +1,10 @@
-# Browser Session Compromise Dashboard
+# Browser Session Auditor
 
 A local-only Chromium extension for Chrome, Brave, and Microsoft Edge that helps triage browser sessions after suspected cookie theft.
 
 It inventories cookie/session indicators in the current browser profile, prioritizes high-value accounts, links to provider session/security pages where available, and lets you clear local browser cookies/site data for risky sites.
 
-![Browser Session Compromise Dashboard screenshot](docs/assets/dashboard-screenshot.png)
+![Browser Session Auditor screenshot](docs/assets/dashboard-screenshot.png)
 
 ## What It Does
 

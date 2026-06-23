@@ -19,7 +19,7 @@ Upload the ZIP with `manifest.json` at the ZIP root.
 
 Name:
 
-Browser Session Compromise Dashboard
+Browser Session Auditor
 
 Short description:
 
@@ -27,7 +27,7 @@ Local-only browser session triage after suspected cookie theft.
 
 Full description:
 
-Browser Session Compromise Dashboard is a local-only extension for Chrome, Brave, Microsoft Edge, and compatible Chromium browsers. It inventories redacted cookie/session indicators in the current browser profile, prioritizes high-value accounts, links to provider session/security pages where available, and lets users clear local browser cookies/site data for risky sites.
+Browser Session Auditor is a local-only extension for Chrome, Brave, Microsoft Edge, and compatible Chromium browsers. It inventories redacted cookie/session indicators in the current browser profile, prioritizes high-value accounts, links to provider session/security pages where available, and lets users clear local browser cookies/site data for risky sites.
 
 The extension is intended for incident response after suspected cookie theft. It does not prove that a cookie or session was stolen, does not revoke provider-side sessions, and does not send scan data to any server.
 

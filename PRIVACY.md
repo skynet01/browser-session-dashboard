@@ -2,7 +2,7 @@
 
 Effective date: 2026-06-11
 
-Browser Session Compromise Dashboard is a local-only browser extension for triaging local browser session indicators after suspected cookie theft.
+Browser Session Auditor is a local-only browser extension for triaging local browser session indicators after suspected cookie theft.
 
 ## Data The Extension Handles
 

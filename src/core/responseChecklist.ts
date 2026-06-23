@@ -10,7 +10,7 @@ export function buildResponseChecklist(
   options: ResponseChecklistOptions = {}
 ): string {
   const lines = [
-    '# Browser Session Compromise Response Checklist',
+    '# Browser Session Auditor Response Checklist',
     '',
     'This export is redacted. It includes local cookie metadata only and never includes cookie values.',
     'Local cleanup logs out this browser profile, but it does not revoke already stolen cookies or server-side sessions.',
