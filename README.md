@@ -62,15 +62,15 @@ For Edge use `edge://extensions`; for Brave use `brave://extensions`.
 
 ## How To Use It
 
-1. Open the dashboard from the extension icon.
-2. Optionally set a suspected compromise date.
+1. Click the extension icon to open the dashboard.
+2. Optionally enter the date you think cookie theft happened. This is shown as incident context only; Chrome does not expose cookie creation dates.
 3. Click Scan browser profile.
-4. Review sites from highest risk to lowest risk.
-5. For important accounts, open the provider review link and revoke unfamiliar sessions/devices where the provider supports it.
-6. Use Clear local data for individual rows when you want to remove this browser's local cookies and storage.
-7. Use Clear high-severity sessions to bulk-clear local data for `critical` and `high` rows that have likely login-session cookies.
-8. Rescan after cleanup, especially if any related tabs are still open.
-9. Mark rows done once local cleanup and provider-side checks are complete.
+4. Start with the `critical` and `high` rows. These are sites with likely login/session cookies or high-value provider signals.
+5. For each important account, click the provider review link and revoke unfamiliar sessions/devices on the provider's own security page.
+6. Use Clear local data when you want to remove this browser profile's local cookies and storage for that site. This logs out this browser, but it does not revoke cookies already stolen elsewhere.
+7. Mark the site done after you have completed provider-side review/revocation and any local cleanup you want.
+8. Rescan after cleanup or after logging back in. Reviewed sites stay marked across scans.
+9. If a reviewed site's session-cookie metadata changes later, the dashboard labels it as a new session signal so you know to verify that site again.
 
 ## Risk Scoring
 
